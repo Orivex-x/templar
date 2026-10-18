@@ -1,0 +1,6 @@
+# Additional files never to include in a Templar deployment source bundle.
+# Patterns use Python's shutil.ignore_patterns syntax.
+
+*.log
+coverage.xml
+htmlcov

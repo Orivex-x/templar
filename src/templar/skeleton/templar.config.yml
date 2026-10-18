@@ -1,0 +1,97 @@
+active: dev
+
+dev:
+  mode: dev
+  host: 127.0.0.1
+  port: 8000
+  debug: true
+  dev_tools: true
+  theme: light
+  default_route: index
+  on_click_hooks: false
+  theme_switching: false
+  auto_deploy: false
+  deployment_domain: ""
+  ssl_cert_path: ""
+  ssl_key_path: ""
+  log_level: DEBUG
+  log_file: logs/dev.log
+  log_max_bytes: 10485760
+  log_backup_count: 5
+  logs_dir: logs
+  cors: true
+  allowed_hosts:
+  - localhost
+  - 127.0.0.1
+  csrf_enabled: true
+  session_secret: changeme
+  session_ttl_seconds: 86400
+  max_body_size: 1048576
+  max_form_fields: 1000
+  request_timeout_seconds: 30
+  max_workers: 100
+  sse_heartbeat_seconds: 15
+  cache_enabled: false
+  cache_backend: memory
+  gzip: false
+  db_engine: sqlite
+  db_uri: sqlite:///data/app.db
+  migrations_dir: migrations
+  use_async_db: false
+  marketplace_registry_dir: templar_packages
+  # Verified marketplace downloads are installed here as <package>/<version>/.
+  marketplace_assets_dir: static/assets/marketplace
+  marketplace_url: ""
+  # Remote packages require a detached signature from one of these GPG fingerprints.
+  marketplace_trusted_fingerprints: []
+
+prod:
+  mode: prod
+  # TLS terminates at a reverse proxy by default. Keep this loopback-only
+  # unless configuring ssl_cert_path and ssl_key_path for direct TLS.
+  host: 127.0.0.1
+  port: 8000
+  debug: false
+  dev_tools: false
+  theme: light
+  default_route: index
+  on_click_hooks: false
+  theme_switching: true
+  auto_deploy: false
+  deployment_domain: example.com
+  ssl_cert_path: ""
+  ssl_key_path: ""
+  tls_terminated_by_proxy: true
+  log_level: INFO
+  log_file: logs/prod.log
+  log_max_bytes: 10485760
+  log_backup_count: 5
+  logs_dir: logs
+  cors: false
+  allowed_hosts:
+    - example.com
+  csrf_enabled: true
+  # Set this in the deployment environment or this project's .env file.
+  session_secret: ${TEMPLAR_SECRET_KEY}
+  session_cookie_name: templar_session
+  session_cookie_secure: true
+  session_cookie_samesite: Lax
+  session_ttl_seconds: 86400
+  max_body_size: 1048576
+  max_form_fields: 1000
+  request_timeout_seconds: 30
+  max_workers: 100
+  sse_heartbeat_seconds: 15
+  cache_enabled: true
+  cache_backend: memory
+  gzip: true
+  db_engine: sqlite
+  db_uri: sqlite:///data/app.db
+  migrations_dir: migrations
+  use_async_db: false
+  marketplace_registry_dir: templar_packages
+  # Verified marketplace downloads are installed here as <package>/<version>/.
+  marketplace_assets_dir: static/assets/marketplace
+  marketplace_url: ""
+  # Remote packages require a detached signature from one of these GPG fingerprints.
+  marketplace_trusted_fingerprints: []

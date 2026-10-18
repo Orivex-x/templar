@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+recursive-include src/templar *.yml *.md *.templar.py
+recursive-include src/templar/skeleton .gitignore .env.example .templarignore *.py *.yml *.md *.css
+global-exclude __pycache__ *.py[cod]

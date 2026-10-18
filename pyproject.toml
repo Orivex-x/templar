@@ -1,0 +1,109 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "templar"
+version = "0.1.0"
+description = "Templar - A Python framework for dynamic web development"
+authors = [{ name = "George Small", email = "orivex-x@proton.me" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+keywords = ["web", "framework", "ui", "reactive", "python"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = [
+    "rich",
+    "argcomplete",
+    "beautifulsoup4",
+    "lxml",
+    "PyYAML",
+    "requests",
+    "python-gnupg",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "pytest-asyncio",
+    "black",
+    "flake8",
+    "mypy",
+]
+test = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "coverage",
+]
+auth = [
+    "bcrypt",
+    "cryptography",
+]
+db = [
+    "psycopg2-binary",
+    "mysql-connector-python",
+]
+cache = [
+    "redis",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+all = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "pytest-asyncio",
+    "black",
+    "flake8",
+    "mypy",
+    "bcrypt",
+    "cryptography",
+    "psycopg2-binary",
+    "mysql-connector-python",
+    "redis",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+
+[project.scripts]
+templar = "templar.cli.Cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Orivex-x/templar"
+Repository = "https://github.com/Orivex-x/templar"
+Issues = "https://github.com/Orivex-x/templar/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["templar*"]
+
+# Important: include non-Python files
+[tool.setuptools.package-data]
+templar = [
+    "skeleton/**/*.py",
+    "skeleton/**/*.templar.py",
+    "skeleton/**/*.yml",
+    "skeleton/**/*.md",
+    "skeleton/**/.gitignore",
+    "skeleton/**/.env.example",
+    "skeleton/**/.templarignore",
+    "themes/*.templar.py",
+    "documentation/**/*.md",
+    "*.yml",
+    "*.md"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
