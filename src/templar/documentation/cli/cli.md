@@ -1,6 +1,6 @@
 # Templar CLI
 
-Install Templar with `python3 -m pip install templar`, then use:
+Install Templar from source (`pip install -e .`), then use:
 
 ```sh
 templar <command> [options]

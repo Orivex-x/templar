@@ -17,8 +17,10 @@
 Generate and run a full-stack Templar project instantly:
 
 ```bash
-# 1. Install Templar
-pip install templar
+# 1. Install Templar from source (not yet on PyPI)
+git clone https://github.com/Orivex-x/templar.git
+cd templar
+pip install -e .
 
 # 2. Create a new project workspace
 templar create my-site

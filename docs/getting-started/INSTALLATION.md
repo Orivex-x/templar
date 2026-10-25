@@ -12,17 +12,23 @@ This guide covers installing the Templar framework and configuring environment r
 
 ---
 
-## Standard Installation
+## Standard Installation (from Source)
 
-Install Templar from PyPI or your package repository into your Python virtual environment:
+> **Note:** Templar is currently in alpha development and is not yet published on PyPI. Install it directly from source.
+
+Clone the repository and install Templar into your Python virtual environment:
 
 ```bash
+# Clone the repository
+git clone https://github.com/Orivex-x/templar.git
+cd templar
+
 # Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# Install Templar
-pip install templar
+# Install Templar from source
+pip install -e .
 ```
 
 Verify that the CLI is accessible:
@@ -39,19 +45,19 @@ Templar includes optional dependency bundles for specific backend providers:
 
 ```bash
 # Database drivers (psycopg2-binary, pymysql, etc.)
-pip install "templar[db]"
+pip install -e ".[db]"
 
 # Authentication & cryptography helpers (bcrypt, cryptography)
-pip install "templar[auth]"
+pip install -e ".[auth]"
 
 # Cache backends (redis)
-pip install "templar[cache]"
+pip install -e ".[cache]"
 
 # Development & test tooling (pytest, pytest-cov, black, ruff)
-pip install "templar[dev]"
+pip install -e ".[dev]"
 
 # Install all optional extras
-pip install "templar[all]"
+pip install -e ".[all]"
 ```
 
 ---
