@@ -5,7 +5,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](pyproject.toml)
-[![Build Status](https://img.shields.io/badge/tests-187%20passing-brightgreen)](#testing)
+[![codecov](https://codecov.io/gh/Orivex-x/templar/branch/master/graph/badge.svg)](https://codecov.io/gh/Orivex-x/templar)
+[![Tests](https://github.com/Orivex-x/templar/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/Orivex-x/templar/actions/workflows/tests.yml)
 [![Status](https://img.shields.io/badge/status-alpha--in--development-orange)](#)
 
 **Templar** is a Python-native web UI framework and full-stack application server designed to build reactive, robust web applications entirely in Python. Instead of relying on traditional template languages (like Jinja or Django templates) and context-switching between HTML and Python, Templar constructs clean view hierarchies using composable Python elements with dynamic request handling, an Active Record ORM, automated schema migrations, secure session authentication, and an interactive developer CLI.
