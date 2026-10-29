@@ -8,7 +8,6 @@ from templar.cli.BaseCommand import BaseCommand
 
 sys.dont_write_bytecode = True
 
-
 class PreviewCommand(BaseCommand):
     name = "preview"
     help = "Preview a template"

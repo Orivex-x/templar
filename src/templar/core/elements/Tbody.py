@@ -20,15 +20,6 @@ class Tbody(Element):
     ):
         super().__init__("tbody", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """
-        Optional default styles for tbody. Typically, left empty for flexibility.
-        """
-        pass
-
     def default_scripts(self, script: Javascript):
         pass
 

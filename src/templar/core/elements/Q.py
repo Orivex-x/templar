@@ -21,15 +21,6 @@ class Q(Element):
     ):
         super().__init__("q", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        # Add quotation marks via CSS and default color
-        style.set("quotes", '"“" "”" "‘" "’"').set("color", "#444")
-        style.nested("::before", {"content": "open-quote"})
-        style.nested("::after", {"content": "close-quote"})
-
     def default_scripts(self, script: Javascript):
         pass
 

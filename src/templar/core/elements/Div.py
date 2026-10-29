@@ -28,19 +28,6 @@ class Div(Element):
 
         super().__init__("div", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("padding", "10px") \
-            .set("background-color", "#f0f0f0") \
-            .set("border-radius", "4px") \
-            .set("box-sizing", "border-box")
-
     def default_scripts(self, script: Javascript):
         pass
 

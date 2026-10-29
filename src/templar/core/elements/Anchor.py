@@ -41,19 +41,6 @@ class Anchor(Element):
 
         super().__init__("a", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("color", "blue").set("text-decoration", "none")
-        style.nested(":hover", {"text-decoration": "underline", "color": "darkblue"})
-        style.nested(":active", {"color": "red"})
-        style.nested(":focus", {"outline": "2px solid orange"})
-
     def default_scripts(self, script: Javascript):
         pass
 

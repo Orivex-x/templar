@@ -20,9 +20,6 @@ class Video(Element):
     ):
         super().__init__("video", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        style.set("max-width", "100%").set("height", "auto")
-
     def default_scripts(self, script: Javascript):
         pass
 

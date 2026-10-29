@@ -27,19 +27,6 @@ class Dd(Element):
 
         super().__init__("dd", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("margin-left", "1.5rem") \
-            .set("color", "#333") \
-            .set("padding", "0.25rem 0") \
-            .set("font-size", "0.95rem")
-
     def default_scripts(self, script: Javascript):
         pass
 

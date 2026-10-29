@@ -29,20 +29,6 @@ class Figcaption(Element):
         # Reference to parent element (optional)
         self.parent: Optional[Element] = parent
 
-        # Optional style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("text-align", "center") \
-            .set("font-size", "0.9rem") \
-            .set("color", "#555") \
-            .set("margin-top", "0.5rem") \
-            .set("display", "block")
-
     def default_scripts(self, script: Javascript):
         pass
 

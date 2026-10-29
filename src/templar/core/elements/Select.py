@@ -30,14 +30,6 @@ class Select(Element):
 
         super().__init__("select", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("padding", "0.5rem") \
-            .set("border", "1px solid #ccc") \
-            .set("border-radius", "4px")
-
     def default_scripts(self, script: Javascript):
         pass
 

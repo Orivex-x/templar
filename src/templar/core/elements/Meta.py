@@ -15,15 +15,7 @@ class Meta(Element):
     def __init__(self, id: str = None, parent: Optional[Element] = None, **props):
         super().__init__("meta", None, id=id, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Meta tag does not require styling."""
-        pass
 
     def default_scripts(self, script: Javascript):
         pass

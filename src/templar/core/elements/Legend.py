@@ -23,20 +23,7 @@ class Legend(Element):
     ):
         super().__init__("legend", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-        # Scoped placeholders for optional CSS/JS
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("font-weight", "bold") \
-            .set("margin-bottom", "0.25rem") \
-            .set("display", "block")
 
     def default_scripts(self, script: Javascript):
         pass

@@ -1,13 +1,20 @@
 import sys
+from typing import Any, Dict, Optional, Union
+
 sys.dont_write_bytecode = True
 
 class CSS:
-    def __init__(self, selector: str = None):
-        self.selector = selector
-        self.rules = {}          # standard CSS properties
-        self.children = {}       # nested selectors, e.g., ':hover', '::after'
-        self.variables = {}      # CSS variables: --var-name: value
-        self.media_queries = {}  # media queries: {query: {pseudo_or_selector: {prop: value}}}
+    def __init__(self, selector: Optional[Union[str, Dict[str, Any]]] = None):
+        self.selector: Optional[str] = None
+        self.rules: Dict[str, Any] = {}
+        self.children: Dict[str, Dict[str, Any]] = {}
+        self.variables: Dict[str, Any] = {}
+        self.media_queries: Dict[str, Dict[str, Any]] = {}
+
+        if isinstance(selector, dict):
+            self.rules.update(selector)
+        else:
+            self.selector = selector
 
     # -----------------------------
     # Properties

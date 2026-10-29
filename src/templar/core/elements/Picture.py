@@ -22,14 +22,6 @@ class Picture(Element):
     ):
         super().__init__("picture", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("display", "block")\
-            .set("max-width", "100%")\
-            .set("margin", "0 auto")
-
     def default_scripts(self, script: Javascript):
         pass
 

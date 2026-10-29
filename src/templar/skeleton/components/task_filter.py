@@ -1,3 +1,4 @@
+from templar.core.Css import CSS
 from templar.core.elements.Div import Div
 from templar.core.elements.Button import Button
 from templar.core.elements.Paragraph import Paragraph
@@ -5,8 +6,8 @@ from templar.core.elements.Heading import Heading
 
 
 class TaskFilter(Div):
-    def __init__(self, tasks: list | None = None):
-        self.tasks = tasks or [
+    def __init__(self, tasks: list | None = None, css: CSS | None = None):
+        self.tasks = tasks if tasks is not None else [
             {"title": "Fix invoice export", "done": False},
             {"title": "Update security headers", "done": True},
             {"title": "Review onboarding flow", "done": False},
@@ -15,129 +16,197 @@ class TaskFilter(Div):
 
         self.filter = "all"
 
-        self.title = Heading("Task Board", level=3)
-        self.status = Paragraph(f"Showing: {self.filter}", id="task-filter-status")
+        super().__init__(
+            content=[],
+            id="task-filter",
+            classes=["task-filter"],
+            css=css or CSS({
+                "width": "100%",
+                "padding": "24px",
+                "box-sizing": "border-box",
+                "background-color": "#ffffff",
+                "border": "1px solid #e2e8f0",
+                "border-radius": "16px",
+                "color": "#0f172a",
+            }),
+        )
 
-        super().__init__(content=[], id="task-filter", classes=["task-filter"])
+        self.title = Heading(
+            "Task Board",
+            level=3,
+            css=CSS({
+                "margin": "0 0 20px",
+                "font-size": "22px",
+                "font-weight": "750",
+                "letter-spacing": "-0.03em",
+                "color": "#0f172a",
+            }),
+        )
 
-        # Important: assign root-level click handler AFTER base init
+        self.status = Paragraph(
+            "Showing: all",
+            id="task-filter-status",
+            css=CSS({
+                "margin": "18px 0 12px",
+                "font-size": "13px",
+                "color": "#64748b",
+            }),
+        )
+
+        self.all_btn = Button(
+            "All",
+            id="task-filter-all",
+            data_action="all",
+            css=CSS({
+                "padding": "8px 14px",
+                "border": "1px solid #4f46e5",
+                "border-radius": "8px",
+                "background-color": "#4f46e5",
+                "color": "#ffffff",
+                "font-weight": "600",
+                "cursor": "pointer",
+            }),
+        )
+
+        self.open_btn = Button(
+            "Open",
+            id="task-filter-open",
+            data_action="open",
+            css=CSS({
+                "padding": "8px 14px",
+                "border": "1px solid #e2e8f0",
+                "border-radius": "8px",
+                "background-color": "#ffffff",
+                "color": "#334155",
+                "font-weight": "600",
+                "cursor": "pointer",
+            }),
+        )
+
+        self.done_btn = Button(
+            "Done",
+            id="task-filter-done",
+            data_action="done",
+            css=CSS({
+                "padding": "8px 14px",
+                "border": "1px solid #e2e8f0",
+                "border-radius": "8px",
+                "background-color": "#ffffff",
+                "color": "#334155",
+                "font-weight": "600",
+                "cursor": "pointer",
+            }),
+        )
+
+        # Register the component-level event handler after base initialization.
         self.event_handlers = {"click": self.handle_click}
 
-        self.all_btn = Button("All", id="task-filter-all", data_action="all")
-        self.open_btn = Button("Open", id="task-filter-open", data_action="open")
-        self.done_btn = Button("Done", id="task-filter-done", data_action="done")
-
-        self.content = [
-            self.title,
-            Div([self.all_btn, self.open_btn, self.done_btn], classes=["toolbar"]),
-            self.status,
-            self._render_tasks(),
-        ]
+        self._refresh_content()
 
     def handle_click(self, payload=None):
         payload = payload or {}
         action = payload.get("action")
-        task_id = payload.get("task_id")
 
-        if action == "all":
-            return self.set_all(payload)
-        if action == "open":
-            return self.set_open(payload)
-        if action == "done":
-            return self.set_done(payload)
+        if action in ("all", "open", "done"):
+            self.filter = action
+            self._refresh_content()
+            return super().render()
+
         if action == "toggle_task":
-            return self.toggle_task(payload)
+            task_id = payload.get("task_id")
+
+            if task_id:
+                for task in self.tasks:
+                    if task["title"] == task_id:
+                        task["done"] = not task["done"]
+                        break
+
+            self._refresh_content()
+            return super().render()
 
         return super().render()
 
-    def _visible_tasks(self):
-        if self.filter == "all":
-            return self.tasks
-        if self.filter == "open":
-            return [task for task in self.tasks if not task["done"]]
-        if self.filter == "done":
-            return [task for task in self.tasks if task["done"]]
-        return self.tasks
+    def _refresh_content(self):
+        self.status.content = [f"Showing: {self.filter}"]
 
-    def _render_tasks(self):
-        visible = self._visible_tasks()
-        item_nodes = []
+        toolbar = Div(
+            [self.all_btn, self.open_btn, self.done_btn],
+            classes=["toolbar"],
+            css=CSS({
+                "display": "flex",
+                "flex-wrap": "wrap",
+                "gap": "8px",
+                "align-items": "center",
+            }),
+        )
 
-        for task in visible:
-            item_nodes.append(
+        visible_tasks = [
+            task for task in self.tasks
+            if self.filter == "all"
+            or (self.filter == "open" and not task["done"])
+            or (self.filter == "done" and task["done"])
+        ]
+
+        task_items = []
+
+        for task in visible_tasks:
+            task_items.append(
                 Div(
                     [
-                        Paragraph(str(task["title"])),
+                        Paragraph(
+                            str(task["title"]),
+                            css=CSS({
+                                "margin": "0",
+                                "font-size": "14px",
+                                "font-weight": "500",
+                                "color": "#0f172a",
+                            }),
+                        ),
                         Button(
-                            "Mark done" if not task["done"] else "Mark open",
+                            "Mark open" if task["done"] else "Mark done",
                             data_action="toggle_task",
                             data_task_id=task["title"],
+                            css=CSS({
+                                "padding": "7px 10px",
+                                "border": "1px solid #cbd5e1",
+                                "border-radius": "7px",
+                                "background-color": "#f8fafc",
+                                "color": "#334155",
+                                "font-size": "12px",
+                                "font-weight": "600",
+                                "cursor": "pointer",
+                            }),
                         ),
                     ],
                     classes=["task-item"],
+                    css=CSS({
+                        "display": "flex",
+                        "align-items": "center",
+                        "justify-content": "space-between",
+                        "gap": "16px",
+                        "padding": "14px 0",
+                        "border-bottom": "1px solid #e2e8f0",
+                    }),
                 )
             )
 
-        return Div(item_nodes, classes=["task-list"])
-
-    def set_all(self, payload=None):
-        self.filter = "all"
-        self.status.content = [f"Showing: {self.filter}"]
-        self.content = [
-            self.title,
-            Div([self.all_btn, self.open_btn, self.done_btn], classes=["toolbar"]),
-            self.status,
-            self._render_tasks(),
-        ]
-        return super().render()
-
-    def set_open(self, payload=None):
-        self.filter = "open"
-        self.status.content = [f"Showing: {self.filter}"]
-        self.content = [
-            self.title,
-            Div([self.all_btn, self.open_btn, self.done_btn], classes=["toolbar"]),
-            self.status,
-            self._render_tasks(),
-        ]
-        return super().render()
-
-    def set_done(self, payload=None):
-        self.filter = "done"
-        self.status.content = [f"Showing: {self.filter}"]
-        self.content = [
-            self.title,
-            Div([self.all_btn, self.open_btn, self.done_btn], classes=["toolbar"]),
-            self.status,
-            self._render_tasks(),
-        ]
-        return super().render()
-
-    def toggle_task(self, payload=None):
-        payload = payload or {}
-        task_id = payload.get("task_id")
-
-        if not task_id:
-            return super().render()
-
-        for task in self.tasks:
-            if task["title"] == task_id:
-                task["done"] = not task["done"]
-                break
+        task_list = Div(
+            task_items,
+            classes=["task-list"],
+            css=CSS({
+                "display": "flex",
+                "flex-direction": "column",
+            }),
+        )
 
         self.content = [
             self.title,
-            Div([self.all_btn, self.open_btn, self.done_btn], classes=["toolbar"]),
+            toolbar,
             self.status,
-            self._render_tasks(),
+            task_list,
         ]
-        return super().render()
 
     def render(self):
-        self.content = [
-            self.title,
-            Div([self.all_btn, self.open_btn, self.done_btn], classes=["toolbar"]),
-            self.status,
-            self._render_tasks(),
-        ]
+        self._refresh_content()
+
         return super().render()

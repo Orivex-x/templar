@@ -1,5 +1,3 @@
-"""Install shell completion files for the Templar CLI."""
-
 import os
 import shutil
 import subprocess
@@ -8,9 +6,8 @@ from pathlib import Path
 
 from templar.cli.BaseCommand import BaseCommand
 
-
 class CompletionCommand(BaseCommand):
-    """Generate and install Argcomplete integration for the current user."""
+    """Generate and install argcomplete integration for the current user."""
 
     name = "install-completion"
     help = "Install shell completion for templar"

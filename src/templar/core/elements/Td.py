@@ -29,15 +29,6 @@ class Td(Element):
 
         super().__init__("td", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("border", "1px solid #ccc") \
-            .set("padding", "0.5rem") \
-            .set("text-align", "left") \
-            .set("vertical-align", "top")
-
     def default_scripts(self, script: Javascript):
         pass
 

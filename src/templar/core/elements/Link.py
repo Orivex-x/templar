@@ -33,13 +33,6 @@ class Link(Element):
 
         super().__init__("link", None, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Link element usually does not require custom CSS."""
-        pass
-
     def default_scripts(self, script: Javascript):
         pass
 

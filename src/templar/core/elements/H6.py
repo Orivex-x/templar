@@ -26,20 +26,7 @@ class H6(Element):
 
         super().__init__("h6", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-        
-        # Scoped placeholders for optional CSS/JS
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("font-size", "0.875rem") \
-            .set("font-weight", "bold") \
-            .set("margin", "1rem 0")
 
     def default_scripts(self, script: Javascript):
         pass

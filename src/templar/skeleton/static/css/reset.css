@@ -1,0 +1,213 @@
+/*
+ * Templar CSS Reset
+ * -----------------
+ * Provides a consistent starting point across browsers.
+ *
+ * This file intentionally does not define application colors,
+ * fonts, backgrounds, borders, or a visual design system.
+ *
+ * Delete this file if you prefer native browser defaults.
+ */
+
+/* 1. Box sizing */
+:where(*, *::before, *::after) {
+    box-sizing: border-box;
+}
+
+/* 2. Document defaults */
+:where(html) {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    tab-size: 4;
+}
+
+:where(body) {
+    margin: 0;
+    min-height: 100vh;
+    line-height: 1.5;
+}
+
+:where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd) {
+    margin: 0;
+}
+
+/* 3. Typography */
+
+:where(address, blockquote, cite, dfn, em, i, q, var) {
+    font-style: inherit;
+}
+
+:where(b, strong, th) {
+    font-weight: bolder;
+}
+
+:where(small) {
+    font-size: 80%;
+}
+
+:where(sub, sup) {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+:where(sub) {
+    bottom: -0.25em;
+}
+
+:where(sup) {
+    top: -0.5em;
+}
+
+:where(abbr[title]) {
+    text-decoration: underline dotted;
+    text-underline-offset: 0.15em;
+}
+
+:where(code, kbd, samp, pre) {
+    font-family: monospace;
+    font-size: 1em;
+}
+
+:where(pre) {
+    overflow: auto;
+    white-space: pre;
+}
+
+:where(hr) {
+    height: 0;
+    color: inherit;
+}
+
+/* 4. Lists - preserves native list markers by default */
+:where(ul[role="list"], ol[role="list"]) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* 5. Links - Preserves native link colors and underlines */
+:where(a) {
+    color: inherit;
+}
+
+:where(a:not([class])) {
+    text-decoration-skip-ink: auto;
+}
+
+
+/* 6. Images, media, and embedded content */
+:where(img, picture, video, canvas, svg, iframe, embed, object) {
+    vertical-align: middle;
+}
+
+:where(img, picture, video, canvas, svg) {
+    max-width: 100%;
+}
+
+:where(img, video) {
+    height: auto;
+}
+
+:where(img) {
+    display: block;
+}
+
+:where(svg) {
+    overflow: hidden;
+}
+
+:where(iframe) {
+    border: 0;
+}
+
+/* 7. Forms and interactive elements */
+:where(button, input, optgroup, select, textarea) {
+    font: inherit;
+    line-height: inherit;
+}
+
+:where(button, input, select, textarea) {
+    color: inherit;
+}
+
+:where(button, [type="button"], [type="reset"], [type="submit"]) {
+    cursor: pointer;
+}
+
+:where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+    cursor: not-allowed;
+}
+
+:where(textarea) {
+    resize: vertical;
+}
+
+:where(fieldset) {
+    min-width: 0;
+    margin: 0;
+}
+
+:where(legend) {
+    padding: 0;
+}
+
+:where(input, textarea) {
+    max-width: 100%;
+}
+
+:where(input[type="search"]) {
+    -webkit-appearance: textfield;
+    appearance: textfield;
+}
+
+:where(input[type="search"]::-webkit-search-decoration) {
+    -webkit-appearance: none;
+}
+
+:where(::placeholder) {
+    color: inherit;
+    opacity: 0.6;
+}
+
+/* 8. Tables */
+:where(table) {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+:where(th, td) {
+    text-align: inherit;
+}
+
+/* 9. Disclosure and hidden content */
+
+:where(summary) {
+    cursor: pointer;
+}
+
+:where([hidden]) {
+    display: none !important;
+}
+
+
+/* 10. Focus and accessibility */
+:where(:focus-visible) {
+    outline-offset: 2px;
+}
+
+
+/* 11. Motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    :where(html) {
+        scroll-behavior: auto !important;
+    }
+
+    :where(*, *::before, *::after) {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

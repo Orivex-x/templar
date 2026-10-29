@@ -21,12 +21,6 @@ class Paragraph(Element):
     ):
         super().__init__("p", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("margin", "0.5rem 0").set("line-height", "1.5").set("color", "#333")
-
     def default_scripts(self, script: Javascript):
         pass
 

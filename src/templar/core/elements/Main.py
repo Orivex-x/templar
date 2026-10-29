@@ -30,15 +30,7 @@ class Main(Element):
 
         super().__init__("main", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        # Block-level, centered, padding for readability
-        style.set("display", "block").set("width", "100%").set("padding", "1rem").set("margin", "0 auto").set("max-width", "1200px")
 
     def default_scripts(self, script: Javascript):
         pass

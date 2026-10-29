@@ -30,18 +30,6 @@ class Progress(Element):
 
         super().__init__("progress", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("width", "100%")\
-            .set("height", "1.25rem")\
-            .set("appearance", "none")\
-            .set("background-color", "#e0e0e0")
-        style.nested("::-webkit-progress-bar", {"background-color": "#e0e0e0"})
-        style.nested("::-webkit-progress-value", {"background-color": "#007bff"})
-        style.nested("::-moz-progress-bar", {"background-color": "#007bff"})
-
     def default_scripts(self, script: Javascript):
         pass
 

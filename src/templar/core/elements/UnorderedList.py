@@ -21,9 +21,6 @@ class UnorderedList(Element):
     ):
         super().__init__("ul", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        style.set("list-style-type", "disc").set("padding-left", "1.5rem")
-
     def default_scripts(self, script: Javascript):
         pass
 

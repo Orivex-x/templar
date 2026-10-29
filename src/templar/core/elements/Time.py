@@ -25,9 +25,6 @@ class Time(Element):
 
         super().__init__("time", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        style.set("font-style", "italic").set("color", "#555")
-
     def default_scripts(self, script: Javascript):
         pass
 

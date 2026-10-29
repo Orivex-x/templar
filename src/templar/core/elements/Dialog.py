@@ -31,20 +31,6 @@ class Dialog(Element):
 
         super().__init__("dialog", content, id=id, classes=classes, **props)
 
-        # Style & Script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("padding", "1rem") \
-            .set("border", "1px solid #ccc") \
-            .set("border-radius", "6px") \
-            .set("background-color", "#fff") \
-            .set("box-shadow", "0 4px 6px rgba(0,0,0,0.1)")
-
     def default_scripts(self, script: Javascript):
         pass
 

@@ -23,15 +23,8 @@ class ListItem(Element):
         **props
     ):
         super().__init__("li", content, id=id, classes=classes, **props)
-        # Optional reference to parent element
-        self.parent: Optional[Element] = parent
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        # Default spacing for readability
-        style.set("margin-bottom", "0.5rem").set("padding-left", "1rem")
+        self.parent: Optional[Element] = parent
 
     def default_scripts(self, script: Javascript):
         pass

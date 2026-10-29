@@ -45,6 +45,9 @@ dev:
   # Remote packages require a detached signature from one of these GPG fingerprints.
   marketplace_trusted_fingerprints: []
 
+  # Templar Studio settings
+  studio_port: 8765
+
 prod:
   mode: prod
   # TLS terminates at a reverse proxy by default. Keep this loopback-only
@@ -95,3 +98,6 @@ prod:
   marketplace_url: ""
   # Remote packages require a detached signature from one of these GPG fingerprints.
   marketplace_trusted_fingerprints: []
+
+  # Templar Studio settings
+  studio_port: 8765

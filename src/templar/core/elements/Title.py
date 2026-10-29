@@ -21,9 +21,6 @@ class Title(Element):
     ):
         super().__init__("title", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        pass
-
     def default_scripts(self, script: Javascript):
         pass
 

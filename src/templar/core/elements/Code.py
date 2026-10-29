@@ -29,21 +29,6 @@ class Code(Element):
 
         super().__init__("code", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("font-family", "monospace") \
-            .set("background-color", "#f5f5f5") \
-            .set("padding", "0.2rem 0.4rem") \
-            .set("border-radius", "4px") \
-            .set("font-size", "0.95rem") \
-            .set("color", "#c7254e")
-
     def default_scripts(self, script: Javascript):
         pass
 

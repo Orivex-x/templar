@@ -26,22 +26,7 @@ class Footer(Element):
 
         super().__init__("footer", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-        # Optional style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("padding", "1rem") \
-            .set("background-color", "#f1f1f1") \
-            .set("text-align", "center") \
-            .set("font-size", "0.9rem") \
-            .set("color", "#555")
 
     def default_scripts(self, script: Javascript):
         pass

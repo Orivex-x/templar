@@ -22,14 +22,7 @@ class Option(Element):
     ):
         super().__init__("option", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("padding", "0.25rem 0.5rem")
 
     def default_scripts(self, script: Javascript):
         pass

@@ -25,17 +25,6 @@ class Html(Element):
 
         super().__init__("html", content, id=id, classes=classes, **props)
 
-        # Scoped placeholders for optional CSS/JS
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Default styles for <html>."""
-        style.set("height", "100%").set("width", "100%").set("box-sizing", "border-box")
-
     def default_scripts(self, script: Javascript):
         pass
 

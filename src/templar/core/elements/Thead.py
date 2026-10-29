@@ -21,9 +21,6 @@ class Thead(Element):
     ):
         super().__init__("thead", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        style.set("background-color", "#f2f2f2").set("font-weight", "bold")
-
     def default_scripts(self, script: Javascript):
         pass
 

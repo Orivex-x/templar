@@ -26,22 +26,7 @@ class Figure(Element):
 
         super().__init__("figure", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-        # Optional style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("display", "inline-block") \
-            .set("margin", "1rem 0") \
-            .set("text-align", "center") \
-            .set("max-width", "100%") \
-            .set("box-sizing", "border-box")
 
     def default_scripts(self, script: Javascript):
         pass

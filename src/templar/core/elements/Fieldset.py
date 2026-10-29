@@ -29,20 +29,6 @@ class Fieldset(Element):
 
         super().__init__("fieldset", content, id=id, classes=classes, **props)
 
-        # Optional style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("border", "1px solid #ccc") \
-            .set("padding", "1rem") \
-            .set("margin", "1rem 0") \
-            .set("border-radius", "4px") \
-            .set("display", "block")
-
     def default_scripts(self, script: Javascript):
         pass
 

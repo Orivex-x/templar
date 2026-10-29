@@ -21,13 +21,6 @@ class OrderedList(Element):
     ):
         super().__init__("ol", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("padding-left", "1.5rem").set("margin", "0.5rem 0")
-        style.set("line-height", "1.5")
-
     def default_scripts(self, script: Javascript):
         pass
 

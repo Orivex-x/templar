@@ -27,22 +27,6 @@ class Body(Element):
 
         super().__init__("body", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Default CSS for the <body> element."""
-        style.set("margin", "0") \
-            .set("padding", "0") \
-            .set("font-family", "Arial, sans-serif") \
-            .set("line-height", "1.5") \
-            .set("background-color", "#ffffff") \
-            .set("color", "#333")
-
     def default_scripts(self, script: Javascript):
         pass
 

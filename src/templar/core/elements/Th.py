@@ -25,13 +25,6 @@ class Th(Element):
 
         super().__init__("th", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        style.set("border", "1px solid #ccc") \
-            .set("padding", "0.5rem") \
-            .set("text-align", "left") \
-            .set("background-color", "#f2f2f2") \
-            .set("font-weight", "bold")
-
     def default_scripts(self, script: Javascript):
         pass
 

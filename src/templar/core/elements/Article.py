@@ -29,27 +29,6 @@ class Article(Element):
 
         super().__init__("article", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Default CSS for articles."""
-        style.set("padding", "1rem") \
-            .set("margin", "1rem 0") \
-            .set("line-height", "1.6") \
-            .set("background-color", "#fff") \
-            .set("border-radius", "6px") \
-            .set("box-shadow", "0 1px 3px rgba(0,0,0,0.1)")
-
-        # Nested rules for headings and paragraphs
-        style.nested(" h1", {"font-size": "1.5rem", "margin-bottom": "0.5rem"})
-        style.nested(" h2", {"font-size": "1.25rem", "margin-bottom": "0.5rem"})
-        style.nested(" p", {"margin-bottom": "1rem"})
-
     def default_scripts(self, script: Javascript):
         pass
 

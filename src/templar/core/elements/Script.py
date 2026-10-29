@@ -15,9 +15,9 @@ class Script(Element):
     def __init__(
         self,
         content: str = "",
-        src: str = None,
-        id: str = None,
-        classes: list = None,
+        src: str|None = None,
+        id: str|None = None,
+        classes: list|None = None,
         **attributes
     ):
         if src:
@@ -30,13 +30,6 @@ class Script(Element):
 
         if content:
             self.script._add_snippet(content)
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        # Scripts usually have no styles; hook exists for completeness
-        pass
 
     def default_scripts(self, script: Javascript):
         # Already stores content as snippet

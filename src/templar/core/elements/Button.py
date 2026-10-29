@@ -35,28 +35,6 @@ class Button(Element):
 
         super().__init__("button", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Default CSS for buttons."""
-        style.set("padding", "0.5rem 1rem") \
-            .set("border", "1px solid #007BFF") \
-            .set("background-color", "#007BFF") \
-            .set("color", "#fff") \
-            .set("border-radius", "4px") \
-            .set("cursor", "pointer") \
-            .set("font-size", "1rem") \
-            .set("transition", "background-color 0.2s ease")
-
-        # Nested pseudo-classes
-        style.nested(":hover", {"background-color": "#0056b3"})
-        style.nested(":disabled", {"background-color": "#cccccc", "cursor": "not-allowed"})
-
     def default_scripts(self, script: Javascript):
         pass
 

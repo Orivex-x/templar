@@ -1,0 +1,749 @@
+:root {
+    color-scheme: dark;
+    --studio-bg: #0b1020;
+    --studio-sidebar: #0e1627;
+    --studio-surface: #111a2d;
+    --studio-raised: #172238;
+    --studio-border: #26344b;
+    --studio-text: #e6edf7;
+    --studio-muted: #91a0b8;
+    --studio-accent: #8b9cff;
+    --studio-accent-soft: rgba(139, 156, 255, 0.12);
+    --studio-radius: 12px;
+}
+
+/* Base document */
+html,
+body,
+#templar-root {
+    width: 100%;
+    min-height: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--studio-bg) !important;
+    color: var(--studio-text);
+    font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+    min-height: 100vh;
+}
+
+#templar-root {
+    min-height: 100vh;
+    border: 0 !important;
+}
+
+/* Application shell */
+#templar-studio {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100vh;
+    margin: 0 !important;
+    color: var(--studio-text);
+    background: var(--studio-bg);
+    font-family: inherit;
+}
+
+#templar-studio *,
+#templar-studio *::before,
+#templar-studio *::after {
+    box-sizing: border-box;
+}
+
+/* Sidebar */
+#templar-studio .studio-sidebar {
+    box-sizing: border-box;
+    flex: 0 0 250px;
+    width: 250px;
+    padding: 28px 16px;
+    background: var(--studio-sidebar);
+    border-right: 1px solid var(--studio-border);
+}
+
+#templar-studio .studio-sidebar h1,
+#templar-studio .studio-sidebar h2,
+#templar-studio .studio-sidebar h3 {
+    color: var(--studio-text);
+}
+
+/* Navigation */
+#templar-studio .studio-nav-item {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    color: var(--studio-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    text-decoration: none;
+    transition:
+        background 150ms ease,
+        color 150ms ease,
+        border-color 150ms ease;
+}
+
+#templar-studio .studio-nav-item:hover {
+    color: var(--studio-text);
+    background: var(--studio-raised);
+}
+
+#templar-studio .studio-nav-item.is-active {
+    color: var(--studio-accent);
+    background: var(--studio-accent-soft);
+    border-color: rgba(139, 156, 255, 0.24);
+}
+
+/* Header */
+#templar-studio .studio-header {
+    padding: 26px 32px;
+    background: var(--studio-bg);
+    border-bottom: 1px solid var(--studio-border);
+}
+
+#templar-studio .studio-header h1,
+#templar-studio .studio-header h2 {
+    margin-top: 0;
+    color: var(--studio-text);
+}
+
+#templar-studio .studio-header p {
+    color: var(--studio-muted);
+}
+
+/* Main content */
+#templar-studio .studio-main {
+    box-sizing: border-box;
+    flex: 1;
+    min-width: 0;
+    padding: 32px;
+    background: var(--studio-bg);
+}
+
+#templar-studio h1,
+#templar-studio h2,
+#templar-studio h3,
+#templar-studio h4 {
+    color: var(--studio-text);
+    line-height: 1.35;
+}
+
+#templar-studio p {
+    line-height: 1.65;
+}
+
+#templar-studio a {
+    color: var(--studio-accent);
+}
+
+/* Panels and empty states */
+#templar-studio .studio-panel,
+#templar-studio .studio-empty-state {
+    box-sizing: border-box;
+    padding: 22px;
+    margin-bottom: 18px;
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: var(--studio-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+#templar-studio .studio-panel {
+    color: var(--studio-text);
+}
+
+#templar-studio .studio-empty-state {
+    color: var(--studio-muted);
+    background: var(--studio-raised);
+    text-align: center;
+}
+
+#templar-studio .studio-panel p,
+#templar-studio .studio-empty-state p {
+    color: var(--studio-muted);
+}
+
+/* Dashboard cards */
+#templar-studio .studio-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+#templar-studio .studio-card-grid > * {
+    min-width: 0;
+}
+
+/* Section headings */
+#templar-studio .studio-section-header {
+    margin-bottom: 18px;
+}
+
+#templar-studio .studio-section-header h2,
+#templar-studio .studio-section-header h3 {
+    margin-bottom: 6px;
+}
+
+#templar-studio .studio-section-header p {
+    margin-top: 0;
+    color: var(--studio-muted);
+}
+
+/* Native tables */
+#templar-studio table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--studio-text);
+    background: var(--studio-surface);
+}
+
+#templar-studio th,
+#templar-studio td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--studio-border);
+    text-align: left;
+}
+
+#templar-studio th {
+    color: var(--studio-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Form controls */
+#templar-studio input,
+#templar-studio select,
+#templar-studio textarea {
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 10px 12px;
+    color: var(--studio-text);
+    background: var(--studio-raised);
+    border: 1px solid var(--studio-border);
+    border-radius: 8px;
+}
+
+#templar-studio input:focus,
+#templar-studio select:focus,
+#templar-studio textarea:focus {
+    outline: 2px solid var(--studio-accent);
+    outline-offset: 2px;
+}
+
+#templar-studio button {
+    padding: 10px 14px;
+    color: var(--studio-text);
+    background: var(--studio-raised);
+    border: 1px solid var(--studio-border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#templar-studio button:hover {
+    border-color: var(--studio-accent);
+}
+
+/* Code and preformatted output */
+#templar-studio code,
+#templar-studio pre {
+    color: #c7d2fe;
+    background: var(--studio-raised);
+    border-radius: 6px;
+}
+
+#templar-studio code {
+    padding: 2px 5px;
+}
+
+#templar-studio pre {
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: 16px;
+    overflow-x: auto;
+    border: 1px solid var(--studio-border);
+}
+
+/* Studio page layout */
+#templar-studio .studio-page {
+    width: 100%;
+    min-width: 0;
+}
+
+#templar-studio .studio-page > h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+#templar-studio .studio-page > p {
+    margin-top: 0;
+    margin-bottom: 24px;
+    color: var(--studio-muted);
+}
+
+/* =========================================
+   Configuration page
+   ========================================= */
+
+#templar-studio .studio-config {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Configuration page heading and summary */
+#templar-studio .config-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 28px;
+    padding-bottom: 26px;
+    border-bottom: 1px solid var(--studio-border);
+}
+
+#templar-studio .config-page-heading {
+    flex: 1;
+    min-width: 0;
+}
+
+#templar-studio .config-page-heading h2 {
+    margin: 0 0 10px;
+    font-size: clamp(1.65rem, 3vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+}
+
+#templar-studio .config-page-heading p {
+    max-width: 600px;
+    margin: 0;
+    color: var(--studio-muted);
+    font-size: 0.95rem;
+}
+
+#templar-studio .config-overview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 12px;
+    flex: 0 0 auto;
+}
+
+#templar-studio .config-overview-card {
+    min-width: 120px;
+    padding: 16px 20px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(139, 156, 255, 0.08),
+            transparent 85%
+        ),
+        var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: 11px;
+}
+
+#templar-studio .config-overview-value {
+    color: var(--studio-text);
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+#templar-studio .config-overview-label {
+    margin-top: 6px;
+    color: var(--studio-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Configuration section heading */
+#templar-studio .config-content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+#templar-studio .config-section-heading h3 {
+    margin: 0 0 5px;
+    font-size: 1.1rem;
+    font-weight: 650;
+}
+
+#templar-studio .config-section-heading p {
+    margin: 0;
+    color: var(--studio-muted);
+    font-size: 0.88rem;
+}
+
+/* Environment card grid */
+#templar-studio .config-environment-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 20px;
+    min-width: 0;
+}
+
+/* Environment cards */
+#templar-studio .config-environment-card {
+    min-width: 0;
+    overflow: hidden;
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: var(--studio-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+#templar-studio .config-environment-card:hover {
+    border-color: rgba(139, 156, 255, 0.35);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+/* Environment card heading */
+#templar-studio .config-environment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px;
+    background:
+        linear-gradient(
+            115deg,
+            rgba(139, 156, 255, 0.09),
+            transparent 75%
+        ),
+        var(--studio-raised);
+    border-bottom: 1px solid var(--studio-border);
+}
+
+#templar-studio .config-environment-title {
+    min-width: 0;
+}
+
+#templar-studio .config-environment-name {
+    color: var(--studio-text);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+#templar-studio .config-environment-count {
+    margin-top: 5px;
+    color: var(--studio-muted);
+    font-size: 0.78rem;
+}
+
+#templar-studio .config-environment-stat {
+    flex: 0 0 auto;
+    min-width: 62px;
+    padding: 9px 12px;
+    text-align: center;
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: 9px;
+}
+
+#templar-studio .config-stat-value {
+    color: var(--studio-accent);
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+#templar-studio .config-stat-label {
+    margin-top: 3px;
+    color: var(--studio-muted);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Configuration settings list */
+#templar-studio .config-settings {
+    min-width: 0;
+}
+
+#templar-studio .config-setting-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+    gap: 16px;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(38, 52, 75, 0.75);
+    transition: background 150ms ease;
+}
+
+#templar-studio .config-setting-row:last-child {
+    border-bottom: 0;
+}
+
+#templar-studio .config-setting-row:hover {
+    background: rgba(23, 34, 56, 0.65);
+}
+
+#templar-studio .config-setting-key {
+    min-width: 0;
+    padding-top: 2px;
+}
+
+#templar-studio .config-key {
+    color: var(--studio-accent);
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+/* Configuration values */
+#templar-studio .config-value {
+    min-width: 0;
+    color: var(--studio-text);
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+#templar-studio .config-value-boolean {
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+#templar-studio .config-value-boolean.is-enabled {
+    color: #86efac;
+}
+
+#templar-studio .config-value-boolean.is-disabled {
+    color: #fca5a5;
+}
+
+#templar-studio .config-value-null {
+    color: var(--studio-muted);
+    font-style: italic;
+}
+
+/* Configuration empty state */
+#templar-studio .studio-config .studio-empty-state {
+    width: 100%;
+    margin: 0;
+}
+
+/* =========================================
+   Routes inspector
+   ========================================= */
+
+#templar-studio .routes-table {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: var(--studio-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+#templar-studio .routes-table-row {
+    display: grid;
+    grid-template-columns:
+        minmax(140px, 1.1fr)
+        minmax(180px, 2fr)
+        minmax(90px, 0.65fr)
+        minmax(90px, 0.65fr);
+    min-width: 560px;
+    align-items: center;
+    border-bottom: 1px solid var(--studio-border);
+    transition: background 150ms ease;
+}
+
+#templar-studio .routes-table-row:last-child {
+    border-bottom: 0;
+}
+
+#templar-studio .routes-table-row:not(.routes-table-header):hover {
+    background: var(--studio-raised);
+}
+
+#templar-studio .routes-table-header {
+    background: var(--studio-raised);
+}
+
+#templar-studio .routes-table-heading {
+    padding: 13px 16px;
+    color: var(--studio-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#templar-studio .routes-table-cell {
+    min-width: 0;
+    padding: 15px 16px;
+    color: var(--studio-text);
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+#templar-studio .route-pattern {
+    color: var(--studio-accent);
+    font-weight: 600;
+}
+
+#templar-studio .route-template {
+    color: var(--studio-muted);
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", monospace;
+    font-size: 0.82rem;
+}
+
+#templar-studio .route-flag {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+#templar-studio .route-flag.is-yes {
+    color: #86efac;
+}
+
+#templar-studio .route-flag.is-no {
+    color: #fca5a5;
+}
+
+#templar-studio .studio-routes .studio-empty-state {
+    margin-top: 8px;
+}
+
+/* =========================================
+   Responsive layouts
+   ========================================= */
+
+@media (max-width: 1100px) {
+    #templar-studio .config-page-header {
+        flex-direction: column;
+        gap: 22px;
+    }
+
+    #templar-studio .config-overview {
+        width: 100%;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #templar-studio .config-overview-card {
+        min-width: 0;
+    }
+
+    #templar-studio .config-environment-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 850px) {
+    #templar-studio {
+        flex-direction: column;
+    }
+
+    #templar-studio .studio-sidebar {
+        flex: none;
+        width: 100%;
+        padding: 18px 16px;
+        border-right: 0;
+        border-bottom: 1px solid var(--studio-border);
+    }
+
+    #templar-studio .studio-main {
+        padding: 22px 18px;
+    }
+
+    #templar-studio .studio-header {
+        padding: 22px 18px;
+    }
+
+    #templar-studio .studio-card-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    #templar-studio .studio-config {
+        gap: 22px;
+    }
+
+    #templar-studio .config-page-header {
+        padding-bottom: 20px;
+    }
+
+    #templar-studio .config-overview-card {
+        padding: 14px;
+    }
+
+    #templar-studio .config-overview-value {
+        font-size: 1.45rem;
+    }
+
+    #templar-studio .config-environment-header {
+        padding: 16px;
+    }
+
+    #templar-studio .config-setting-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 5px;
+        padding: 13px 16px;
+    }
+
+    #templar-studio .config-value {
+        padding-left: 0;
+    }
+
+    #templar-studio .routes-table {
+        border-radius: 9px;
+    }
+
+    #templar-studio .routes-table-heading,
+    #templar-studio .routes-table-cell {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    #templar-studio .studio-panel,
+    #templar-studio .studio-empty-state {
+        padding: 16px;
+    }
+
+    #templar-studio .config-overview {
+        gap: 8px;
+    }
+
+    #templar-studio .config-overview-card {
+        padding: 12px;
+    }
+
+    #templar-studio .config-overview-label {
+        font-size: 0.7rem;
+    }
+
+    #templar-studio .config-environment-stat {
+        min-width: 54px;
+        padding: 8px;
+    }
+}

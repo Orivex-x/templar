@@ -21,15 +21,6 @@ class Span(Element):
     ):
         super().__init__("span", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """
-        Default inline styling for <span>.
-        """
-        style.set("color", "#000")
-
     def default_scripts(self, script: Javascript):
         pass
 

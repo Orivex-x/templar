@@ -29,24 +29,6 @@ class Aside(Element):
 
         super().__init__("aside", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Default CSS for <aside> elements."""
-        style.set("padding", "0.75rem") \
-            .set("margin", "1rem 0") \
-            .set("background-color", "#f9f9f9") \
-            .set("border-left", "4px solid #ccc") \
-            .set("font-size", "0.9rem") \
-            .set("color", "#555")
-        style.nested(" h4", {"margin-top": "0", "font-size": "1rem", "color": "#333"})
-        style.nested(" p", {"margin-bottom": "0.5rem"})
-
     def default_scripts(self, script: Javascript):
         pass
 

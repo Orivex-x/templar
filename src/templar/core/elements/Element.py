@@ -23,6 +23,7 @@ class Element:
         content: Optional[Union[str, RawHTML, "Element", List[Any]]] = None,
         id: Optional[str] = None,
         classes: Optional[List[str]] = None,
+        css: Optional[CSS] = None,
         **props
     ) -> None:
         if not isinstance(tag, str) or not _TAG_NAME.fullmatch(tag):
@@ -77,14 +78,23 @@ class Element:
         from templar.core.LiveElementRegistry import LiveElementRegistry
         LiveElementRegistry.register(self)
 
-        # Scoped CSS & JS (only if id is provided)
-        self.style: Optional[CSS] = CSS(f"#{self.props['id']}") if self.props.get("id") else None
-        self.script: Optional[Javascript] = Javascript(f"#{self.props['id']}") if self.props.get("id") else None
+        # Scoped CSS and JavaScript
+        element_id = self.props["id"]
 
-        # Allow subclasses to provide defaults
-        if self.style:
-            self.default_styles(self.style)
+        self.style: Optional[CSS] = CSS(f"#{element_id}")
+        self.script: Optional[Javascript] = Javascript(f"#{element_id}")
 
+        # Apply explicitly supplied CSS declarations to this element
+        if css is not None:
+            if not isinstance(css, CSS):
+                raise TypeError("css must be a CSS instance, for example CSS({'color': 'red'})")
+
+            self.style.rules.update(css.rules)
+            self.style.variables.update(css.variables)
+            self.style.children.update(css.children)
+            self.style.media_queries.update(css.media_queries)
+
+        # Keep the existing JavaScript initialization behavior.
         if self.script:
             self.default_scripts(self.script)
 
@@ -118,12 +128,17 @@ class Element:
 
         self.content.append(child)
 
-    # -----------------------------
-    # Default style/script hooks
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Subclasses can override to provide scoped default styles."""
-        pass
+    def css(self, prop: str, value: Any) -> "Element":
+        """Set a CSS property on this element."""
+        if not isinstance(prop, str) or not prop.strip():
+            raise ValueError("CSS property must be a non-empty string")
+
+        if self.style is None:
+            self.style = CSS(f"#{self.props['id']}")
+
+        self.style.set(prop, value)
+
+        return self
 
     def default_scripts(self, script: Javascript):
         """Subclasses can override to provide scoped default scripts."""
@@ -167,41 +182,98 @@ class Element:
         script = Javascript(scope=f"#{self.props['id']}")
 
         js = f"""
-(function() {{
-    const el = document.getElementById("{self.props['id']}");
+    (function() {{
+        const rootId = {self.props['id']!r};
+        const componentId = {self.global_id!r};
+        const stylesheetId = "templar-reactive-styles-" + rootId;
 
-    if (!el) return;
-    
-    el.addEventListener("click", function(event) {{
-        const target = event.target.closest("button");
-        if (!target) return;
-        
-        const payload = {{
-            component_id: "{self.global_id}",
-            event_name: "click",
-            action: target.dataset.action ?? null,
-            task_id: target.dataset.taskId ?? null,
-            text: target.textContent ?? null
-        }};
-        
-        fetch("/__templar_reactive__", {{
-            method: "POST",
-            headers: {{ "Content-Type": "application/json" }},
-            body: JSON.stringify(payload)
-        }})
-        .then(response => response.json())
-        .then(data => {{
-            if (data && data.html) {{
-                const root = document.getElementById("{self.props['id']}");
-                if (root) root.innerHTML = data.html;
-            }}
-        }})
-        .catch(err => {{
-            console.error("Templar reactive event failed:", err);
+        const el = document.getElementById(rootId);
+
+        if (!el || el.dataset.templarBridgeAttached === "true") return;
+
+        el.dataset.templarBridgeAttached = "true";
+
+        el.addEventListener("click", function(event) {{
+            const target = event.target.closest("button");
+
+            if (!target || !el.contains(target)) return;
+
+            const payload = {{
+                component_id: componentId,
+                event_name: "click",
+                action: target.dataset.action ?? null,
+                task_id: target.dataset.taskId ?? null,
+                text: target.textContent ?? null
+            }};
+
+            fetch("/__templar_reactive__", {{
+                method: "POST",
+                headers: {{ "Content-Type": "application/json" }},
+                body: JSON.stringify(payload)
+            }})
+            .then(response => {{
+                if (!response.ok) {{
+                    throw new Error("Reactive request failed: " + response.status);
+                }}
+
+                return response.json();
+            }})
+            .then(data => {{
+                if (!data || !data.html) return;
+
+                // Parse the complete server response without inserting it
+                // directly into the existing root.
+                const parsed = new DOMParser().parseFromString(
+                    data.html,
+                    "text/html"
+                );
+
+                const updatedRoot = parsed.getElementById(rootId);
+                const currentRoot = document.getElementById(rootId);
+
+                if (!updatedRoot || !currentRoot) {{
+                    console.error(
+                        "Templar reactive update: component root not found.",
+                        rootId
+                    );
+                    return;
+                }}
+
+                // Copy only the new root's children. Never insert the root
+                // itself inside the existing root.
+                currentRoot.replaceChildren(
+                    ...Array.from(updatedRoot.childNodes)
+                );
+
+                // Collect style blocks returned by the server render.
+                const styleText = Array.from(
+                    parsed.querySelectorAll("style")
+                )
+                .map(style => style.textContent || "")
+                .filter(Boolean)
+                .join("\\\\n");
+
+                // Keep reactive styles outside the component DOM so they
+                // survive subsequent child updates.
+                let stylesheet = document.getElementById(stylesheetId);
+
+                if (styleText) {{
+                    if (!stylesheet) {{
+                        stylesheet = document.createElement("style");
+                        stylesheet.id = stylesheetId;
+                        document.head.appendChild(stylesheet);
+                    }}
+
+                    stylesheet.textContent = styleText;
+                }}
+            }})
+            .catch(err => {{
+                console.error("Templar reactive event failed:", err);
+            }});
         }});
-    }});
-}})();
+    }})();
         """
+
         script._add_snippet(js)
 
         return script.render(include_script_tags=True)

@@ -41,20 +41,6 @@ class Textarea(Element):
 
         super().__init__("textarea", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """
-        Default styling for textarea.
-        """
-        style.set("width", "100%") \
-            .set("min-height", "100px") \
-            .set("padding", "0.5rem") \
-            .set("border", "1px solid #ccc") \
-            .set("border-radius", "4px") \
-            .set("resize", "vertical")
-
     def default_scripts(self, script: Javascript):
         pass
 

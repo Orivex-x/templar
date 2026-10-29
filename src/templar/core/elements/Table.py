@@ -22,14 +22,6 @@ class Table(Element):
     ):
         super().__init__("table", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("border-collapse", "collapse") \
-            .set("width", "100%") \
-            .set("margin-bottom", "1rem")
-
     def default_scripts(self, script: Javascript):
         pass
 

@@ -22,17 +22,7 @@ class Meter(Element):
     ):
         super().__init__("meter", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("width", "100%") \
-            .set("height", "1.5rem") \
-            .set("background-color", "#e0e0e0") \
-            .set("border-radius", "4px")
 
     def default_scripts(self, script: Javascript):
         pass

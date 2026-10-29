@@ -21,17 +21,6 @@ class Pre(Element):
     ):
         super().__init__("pre", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("font-family", "monospace")\
-            .set("white-space", "pre")\
-            .set("background-color", "#f5f5f5")\
-            .set("padding", "1rem")\
-            .set("border-radius", "4px")\
-            .set("overflow", "auto")
-
     def default_scripts(self, script: Javascript):
         pass
 

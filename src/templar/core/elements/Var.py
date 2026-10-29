@@ -21,9 +21,6 @@ class Var(Element):
     ):
         super().__init__("var", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        style.set("font-style", "italic").set("color", "#d6336c")
-
     def default_scripts(self, script: Javascript):
         pass
 

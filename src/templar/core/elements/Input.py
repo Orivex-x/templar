@@ -33,27 +33,7 @@ class Input(Element):
 
         super().__init__("input", None, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-        # Scoped placeholders for optional CSS/JS
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("padding", "0.5rem") \
-            .set("border", "1px solid #ccc") \
-            .set("border-radius", "4px") \
-            .set("font-size", "1rem") \
-            .set("outline", "none")
-
-        style.nested(":focus", {
-            "border-color": "#007BFF",
-            "box-shadow": "0 0 0 2px rgba(0,123,255,0.25)"
-        })
 
     def default_scripts(self, script: Javascript):
         pass

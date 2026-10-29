@@ -26,16 +26,7 @@ class Nav(Element):
             content = [content]
         super().__init__("nav", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("display", "block") \
-            .set("background-color", "#f8f9fa") \
-            .set("padding", "0.5rem 1rem")
 
     def default_scripts(self, script: Javascript):
         pass

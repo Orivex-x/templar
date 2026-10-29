@@ -30,13 +30,6 @@ class Source(Element):
 
         super().__init__("source", None, **attributes)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        # Self-closing element; typically no styles required
-        pass
-
     def default_scripts(self, script: Javascript):
         pass # No scripts needed for <source>
 

@@ -27,21 +27,6 @@ class Caption(Element):
 
         super().__init__("caption", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("caption-side", "top") \
-            .set("font-weight", "bold") \
-            .set("padding", "0.5rem") \
-            .set("text-align", "center") \
-            .set("background-color", "#f9f9f9") \
-            .set("color", "#333")
-
     def default_scripts(self, script: Javascript):
         pass
 

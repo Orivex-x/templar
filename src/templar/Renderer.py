@@ -1,21 +1,20 @@
-import sys
+import re
 import importlib.util
+import sys
 import threading
 from contextvars import ContextVar
 from pathlib import Path
 
 from templar.Config import Config
 from templar.Template import Template
-from templar.core.elements.ElementMatrix import ElementMatrix
 from templar.core.Javascript import Javascript
-from templar.core.security.SafeString import SafeString
-from templar.cli.CliOutput import CliOutput
-
-from templar.core.elements.Element import Element
 from templar.core.elements import (
     Html, Head, Title, Meta, Script, Link,
     Body, RawHTML, Style
 )
+from templar.core.elements.Element import Element
+from templar.core.elements.ElementMatrix import ElementMatrix
+from templar.core.security.SafeString import SafeString
 
 sys.dont_write_bytecode = True
 
@@ -79,6 +78,46 @@ class Renderer:
                 mtimes.append(f.stat().st_mtime)
 
         return max(mtimes)
+
+    def _inject_optional_reset_css(self, html_output: str) -> str:
+        """
+        Inject the application's optional CSS reset into a full HTML document.
+
+        The stylesheet is loaded only if the optional static/css/reset.css exists.
+        It is inserted at the beginning of <head>, before application styles.
+        """
+        static_dir = Path(self.staticDir)
+        reset_path = static_dir / "css" / "reset.css"
+
+        if not reset_path.is_file():
+            return html_output
+
+        # Avoid inserting the same stylesheet more than once.
+        reset_link_pattern = re.compile(
+            r'<link\b'
+            r'(?=[^>]*\bhref\s*=\s*["\']/?static/css/reset\.css(?:[?#][^"\']*)?["\'])'
+            r'[^>]*>',
+            re.IGNORECASE,
+        )
+
+        if reset_link_pattern.search(html_output):
+            return html_output
+
+        reset_link = (
+            '<link rel="stylesheet" href="/static/css/reset.css">'
+        )
+
+        # Insert the reset before other stylesheets in the document head.
+        head_pattern = re.compile(r"<head\b[^>]*>", re.IGNORECASE)
+
+        if not head_pattern.search(html_output):
+            return html_output
+
+        return head_pattern.sub(
+            lambda match: f"{match.group(0)}\n    {reset_link}",
+            html_output,
+            count=1,
+        )
 
     # -----------------------------
     # Theme CSS loader
@@ -164,7 +203,7 @@ class Renderer:
     def render_template(
         self,
         template_name_or_file: str,
-        user_input: dict = None,
+        user_input: dict|None = None,
         debug: bool = True,
         **context
     ) -> str:
@@ -220,7 +259,7 @@ class Renderer:
         if js_path.exists():
             head_elements.append(
                 Script(
-                    src=f"/static/javascript/{js_path.name}?v={int(js_path.stat().st_mtime)}"
+                    src=(f"/static/javascript/{js_path.name}?v={int(js_path.stat().st_mtime)}")
                 )
             )
 
@@ -262,5 +301,6 @@ class Renderer:
         matrix.build(html_doc, template_name)
         self._request_matrix.set(matrix)
 
-        # Do NOT print; logs are returned via get_matrix_log()
-        return "<!DOCTYPE html>\n" + html_doc.render()
+        html_output = "<!DOCTYPE html>\n" + html_doc.render()
+
+        return self._inject_optional_reset_css(html_output)

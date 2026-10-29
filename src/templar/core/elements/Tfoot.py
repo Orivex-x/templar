@@ -21,13 +21,6 @@ class Tfoot(Element):
     ):
         super().__init__("tfoot", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("font-weight", "bold") \
-            .set("background-color", "#f9f9f9")
-
     def default_scripts(self, script: Javascript):
         pass
 

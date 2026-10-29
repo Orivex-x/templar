@@ -32,30 +32,6 @@ class Blockquote(Element):
 
         super().__init__("blockquote", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        style.set("margin", "1rem 0") \
-             .set("padding", "0.5rem 1rem") \
-             .set("border-left", "4px solid #ccc") \
-             .set("color", "#555") \
-             .set("font-style", "italic") \
-             .set("background-color", "#fdfdfd")
-
-        # Nested styles for <cite>
-        style.nested(" cite", {
-            "display": "block",
-            "font-size": "0.85rem",
-            "margin-top": "0.5rem",
-            "color": "#777",
-            "text-align": "right"
-        })
-
     def default_scripts(self, script: Javascript):
         pass
 

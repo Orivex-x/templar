@@ -47,6 +47,7 @@ class TemplarServer(ThreadingHTTPServer):
         static_dir: Path | None = None,
         middleware: MiddlewareManager | None = None,
         user_loader: Optional[Callable[[Any], Optional[dict]]] = None,
+        port_override: Optional[int] = None,
     ):
         """
         Args:
@@ -84,7 +85,8 @@ class TemplarServer(ThreadingHTTPServer):
 
         # Resolve network configuration
         host = self.active_config.get("host", "0.0.0.0")
-        port = self.active_config.get("port", 8000)
+        port = (port_override if port_override is not None else self.active_config.get("port", 8000))
+
         self.default_route = self.active_config.get("default_route", "index")
         self.max_body_size = int(self.active_config.get("max_body_size", 1_048_576))
         self.max_form_fields = int(self.active_config.get("max_form_fields", 1_000))

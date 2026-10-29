@@ -21,9 +21,6 @@ class Tr(Element):
     ):
         super().__init__("tr", content, id=id, classes=classes, **props)
 
-    def default_styles(self, style: CSS):
-        style.set("border-bottom", "1px solid #ccc")
-
     def default_scripts(self, script: Javascript):
         pass
 

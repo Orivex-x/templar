@@ -21,15 +21,6 @@ class Summary(Element):
     ):
         super().__init__("summary", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """
-        Default styling for <summary>: cursor pointer and bold text.
-        """
-        style.set("cursor", "pointer").set("font-weight", "bold")
-
     def default_scripts(self, script: Javascript):
         pass
 

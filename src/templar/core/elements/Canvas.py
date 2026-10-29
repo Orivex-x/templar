@@ -35,20 +35,6 @@ class Canvas(Element):
 
         super().__init__("canvas", content, id=id, classes=classes, **props)
 
-        # Optional: style & script placeholders
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Default CSS for canvas element."""
-        style.set("border", "1px solid #ccc") \
-            .set("display", "block") \
-            .set("margin", "1rem auto") \
-            .set("background-color", "#fff")
-
     def default_scripts(self, script: Javascript):
         pass
 

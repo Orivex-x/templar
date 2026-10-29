@@ -26,22 +26,7 @@ class Header(Element):
 
         super().__init__("header", content, id=id, classes=classes, **props)
 
-        # Optional reference to parent element
         self.parent: Optional[Element] = parent
-
-        # Scoped placeholders for optional CSS/JS
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
-
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        """Default CSS for <header>."""
-        style.set("padding", "1rem") \
-            .set("background-color", "#f8f9fa") \
-            .set("border-bottom", "1px solid #dee2e6") \
-            .set("margin-bottom", "1rem")
 
     def default_scripts(self, script: Javascript):
         pass

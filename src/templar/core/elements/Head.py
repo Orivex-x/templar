@@ -27,8 +27,6 @@ class Head(Element):
         super().__init__("head", content, id=id, classes=classes, **props)
 
         self.parent: Optional[Element] = parent
-        self.style: Optional[CSS] = self.style or CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = self.script or Javascript(f"#{id}") if id else None
 
     def on_init(self):
         """Assign parent to children for ElementMatrix"""

@@ -26,13 +26,6 @@ class Section(Element):
 
         super().__init__("section", content, id=id, classes=classes, **props)
 
-    # -----------------------------
-    # Scoped defaults
-    # -----------------------------
-    def default_styles(self, style: CSS):
-        # Basic spacing and readability
-        style.set("padding", "1rem").set("margin", "1rem 0")
-
     def default_scripts(self, script: Javascript):
         pass
 
