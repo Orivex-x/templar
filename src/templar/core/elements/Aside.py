@@ -48,15 +48,7 @@ class Aside(Element):
         style.nested(" p", {"margin-bottom": "0.5rem"})
 
     def default_scripts(self, script: Javascript):
-        """Default JS for <aside> elements."""
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log click events
-            script.on(f"#{element_id}", "click", "console.log('[Aside] Clicked: ' + this.id);")
-            # Hover highlight
-            script.on(f"#{element_id}", "mouseenter", "this.style.borderLeftColor = '#007BFF';")
-            script.on(f"#{element_id}", "mouseleave", "this.style.borderLeftColor = '#ccc';")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -86,15 +78,7 @@ class Aside(Element):
             print(f"[Aside] Added role='complementary' to id={self.props.get('id')}")
 
     def after_render(self, html_output: str) -> str:
-        """Inject style and script after the aside HTML if present."""
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-        if script_block:
-            final_output += f"\n{script_block}"
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

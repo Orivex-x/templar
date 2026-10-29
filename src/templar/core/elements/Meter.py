@@ -35,10 +35,7 @@ class Meter(Element):
             .set("border-radius", "4px")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-        if element_id:
-            # Log current value when clicked
-            script.on(f"#{element_id}", "click", "console.log('Meter clicked: ' + this.value);")
+        pass
 
     # -----------------------------
     # Lifecycle
@@ -64,17 +61,7 @@ class Meter(Element):
             print(f"[Meter] Warning: <meter> typically appears inside <form>, <div>, <section>, or <main>")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive DOM updates

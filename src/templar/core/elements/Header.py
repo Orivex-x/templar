@@ -44,12 +44,7 @@ class Header(Element):
             .set("margin-bottom", "1rem")
 
     def default_scripts(self, script: Javascript):
-        """Default JS for <header>."""
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log click events on the header
-            script.on(f"#{element_id}", "click", f"console.log('[Header] clicked: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -75,18 +70,7 @@ class Header(Element):
             self.props["role"] = "banner"
 
     def after_render(self, html_output: str) -> str:
-        """Inject a scoped style / script after <header> HTML if present."""
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

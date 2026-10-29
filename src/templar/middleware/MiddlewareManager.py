@@ -29,8 +29,8 @@ class MiddlewareManager:
         Execute before-request middleware.
 
         If middleware returns a non-None value:
-            → processing stops
-            → the caller uses the returned value to send an early response
+            -> processing stops
+            -> the caller uses the returned value to send an early response
               (e.g. auth guard, redirect, JSON error, rate limit block)
         """
         for func in self.before_request:

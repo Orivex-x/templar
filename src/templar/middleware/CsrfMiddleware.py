@@ -28,6 +28,10 @@ def install(manager: MiddlewareManager = middleware, config=None) -> None:
     def protect(ctx):
         ctx.csrf_token = lambda: csrf_token(ctx)
 
+        # Internal reactive bridge should not require a CSRF token.
+        if ctx.path == "/__templar_reactive__":
+            return None
+
         if ctx.method != "POST":
             return None
 

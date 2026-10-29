@@ -1,4 +1,4 @@
-import sys, html, re
+import sys, html, re, uuid
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlsplit
 
@@ -29,20 +29,37 @@ class Element:
             raise ValueError(f"Invalid HTML tag name: {tag!r}")
 
         self.tag: str = tag
+        self.event_handlers: Dict[str, Any] = {}
+        self.global_id = id or f"el-{uuid.uuid4().hex[:10]}"
+
+        for key, value in props.items():
+            if key.startswith("on_") and callable(value):
+                self.event_handlers[key[3:].lower()] = value
+
         self.props: Dict[str, Any] = self._normalize_props(props)
+
+        self._capture_event_handlers(props)
         self.state: Dict[str, Any] = {}
 
         # Parent element reference
         self.parent: Optional[Element] = None
 
-        # Normalize classes → "class" attribute
+        # Normalize classes -> "class" attribute
         if classes:
             self.props["class"] = " ".join(classes)
 
+        # Ensure an element id exists so the framework generated JS has a selector
         if id:
             self.props["id"] = id
+        else:
+            self.props["id"] = self.global_id
 
-        # Normalize content → always a list
+        # Internal metadata for event bridge
+        if self.event_handlers:
+            self.props["data-templar-component"] = self.global_id
+            self.props["data-templar-events"] = ",".join(sorted(self.event_handlers.keys()))
+
+        # Normalize content -> always a list
         if content is None:
             self.content: List[Any] = []
         elif isinstance(content, (str, RawHTML, Element)):
@@ -57,9 +74,12 @@ class Element:
             if isinstance(c, Element):
                 c.parent = self
 
+        from templar.core.LiveElementRegistry import LiveElementRegistry
+        LiveElementRegistry.register(self)
+
         # Scoped CSS & JS (only if id is provided)
-        self.style: Optional[CSS] = CSS(f"#{id}") if id else None
-        self.script: Optional[Javascript] = Javascript(f"#{id}") if id else None
+        self.style: Optional[CSS] = CSS(f"#{self.props['id']}") if self.props.get("id") else None
+        self.script: Optional[Javascript] = Javascript(f"#{self.props['id']}") if self.props.get("id") else None
 
         # Allow subclasses to provide defaults
         if self.style:
@@ -71,6 +91,24 @@ class Element:
         # Lifecycle hook
         self.on_init()
 
+    def _normalize_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
+        normalized = {}
+
+        for key, value in props.items():
+            if key.startswith("on_") and callable(value):
+                # Event callbacks are handled separately and are never rendered as HTML attributes
+                continue
+
+            attr = "class" if key == "class_" else key.replace("_", "-")
+            normalized[attr] = value
+
+        return normalized
+
+    def _capture_event_handlers(self, props: Dict[str, Any]) -> None:
+        for key, value in props.items():
+            if key.startswith("on_") and callable(value):
+                self.event_handlers[key[3:].lower()] = value
+
     # -----------------------------
     # Helper to add children dynamically
     # -----------------------------
@@ -79,15 +117,6 @@ class Element:
             child.parent = self
 
         self.content.append(child)
-
-    def _normalize_props(self, props: Dict[str, Any]) -> Dict[str, Any]:
-        normalized = {}
-
-        for key, value in props.items():
-            attr = "class" if key == "class_" else key.replace("_", "-")
-            normalized[attr] = value
-
-        return normalized
 
     # -----------------------------
     # Default style/script hooks
@@ -122,35 +151,65 @@ class Element:
     # -----------------------------
     def before_render(self):
         """Generic logging for element initialization/building."""
-        
-        # Log element type and basic attributes
         attrs = {k: v for k, v in self.props.items() if v is not None}
         text = f"[{type(self).__name__}] Initialized"
         
         if attrs:
             text += " " + ", ".join(f"{k}={v}" for k, v in attrs.items())
+
+    # -----------------------------
+    # Reactive event bridge
+    # -----------------------------
+    def render_event_bridge(self) -> str:
+        if not self.event_handlers:
+            return ""
+
+        script = Javascript(scope=f"#{self.props['id']}")
+
+        js = f"""
+(function() {{
+    const el = document.getElementById("{self.props['id']}");
+
+    if (!el) return;
+    
+    el.addEventListener("click", function(event) {{
+        const target = event.target.closest("button");
+        if (!target) return;
         
-        # print(SafeString(text).content)  # or use a safe logging function if available
+        const payload = {{
+            component_id: "{self.global_id}",
+            event_name: "click",
+            action: target.dataset.action ?? null,
+            task_id: target.dataset.taskId ?? null,
+            text: target.textContent ?? null
+        }};
+        
+        fetch("/__templar_reactive__", {{
+            method: "POST",
+            headers: {{ "Content-Type": "application/json" }},
+            body: JSON.stringify(payload)
+        }})
+        .then(response => response.json())
+        .then(data => {{
+            if (data && data.html) {{
+                const root = document.getElementById("{self.props['id']}");
+                if (root) root.innerHTML = data.html;
+            }}
+        }})
+        .catch(err => {{
+            console.error("Templar reactive event failed:", err);
+        }});
+    }});
+}})();
+        """
+        script._add_snippet(js)
 
-        # Log style/script blocks if they exist
-        if self.style:
-            style_lines = self.style.render().splitlines()
-            
-            for line in style_lines:
-                pass
-                # print(f"  [Style] {line.strip()}")
-
-        if self.script:
-            script_lines = self.script.render().splitlines()
-
-            for line in script_lines:
-                pass
-                # print(f"  [Script] {line.strip()}")
+        return script.render(include_script_tags=True)
 
     # -----------------------------
     # Reactive patching
     # -----------------------------
-    def update_dom(self):
+    def update_dom(self) -> str:
         if self.script:
             return self.script.render()
         
@@ -161,19 +220,10 @@ class Element:
     # -----------------------------
     @staticmethod
     def _validate_url_attribute(name: str, value: Any) -> None:
-        """Reject executable or otherwise unsupported URL schemes.
-
-        HTML escaping prevents markup injection but does not neutralize a
-        ``javascript:`` URL. Whitespace and character references are removed
-        for Scheme inspection because browsers normalize them before deciding
-        whether a URL is executable.
-        """
         if name.lower() not in _URL_ATTRIBUTE_NAMES or not isinstance(value, str):
             return
 
         candidate = html.unescape(value).strip()
-        # ``srcset`` is a comma-separated list. Checking only its first URL would leave later candidates free to use an
-        # executable scheme.
         is_srcset = name.lower() == "srcset"
         candidates = candidate.split(",") if is_srcset else [candidate]
 
@@ -193,7 +243,8 @@ class Element:
                 raise ValueError(f"Invalid HTML attribute name: {key!r}")
 
             if key.lower().startswith("on") or key.lower() in _UNSAFE_ATTRIBUTE_NAMES:
-                raise ValueError(f"Unsafe HTML attribute name: {key!r}")
+                # Raw HTML event attributes are not allowed; framework-managed events are handled separately
+                continue
 
             if value is None or value is False:
                 continue
@@ -211,6 +262,7 @@ class Element:
     def after_render(self, html_output: str) -> str:
         style_block = self.style.render() if self.style else ""
         script_block = self.script.render() if self.script else ""
+        bridge_block = self.render_event_bridge()
         output = html_output
 
         if style_block:
@@ -218,6 +270,9 @@ class Element:
 
         if script_block:
             output += f"\n{script_block}"
+
+        if bridge_block:
+            output += f"\n{bridge_block}"
 
         return output
 
@@ -235,7 +290,6 @@ class Element:
             elif isinstance(c, SafeString):
                 inner += c.render()
             else:
-                # Script and style contents are raw text in HTML.
                 if getattr(self, "tag", "").lower() in {"script", "style"}:
                     inner += str(c)
                 else:

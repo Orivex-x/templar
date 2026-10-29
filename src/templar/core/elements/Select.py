@@ -39,11 +39,7 @@ class Select(Element):
             .set("border-radius", "4px")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log change events
-            script.on(f"#{element_id}", "change", f"console.log('Select changed: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -69,17 +65,7 @@ class Select(Element):
             print(f"[Select] Warning: <select> should not be a child of <{self.parent.tag}>")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

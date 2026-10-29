@@ -1,13 +1,12 @@
 """Pre-built UI components with styled defaults."""
 
 import sys
-from typing import Optional, List, Union
+from typing import List, Union
 
-from templar.core.elements.Div import Div
-from templar.core.elements.Span import Span
 from templar.core.elements.Button import Button
+from templar.core.elements.Div import Div
 from templar.core.elements.Element import Element
-from templar.core.Css import CSS
+from templar.core.elements.Span import Span
 
 sys.dont_write_bytecode = True
 

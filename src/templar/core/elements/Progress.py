@@ -43,11 +43,7 @@ class Progress(Element):
         style.nested("::-moz-progress-bar", {"background-color": "#007bff"})
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log changes for reactive behaviour
-            script.on(f"#{element_id}", "change", f"console.log('Progress updated: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -73,17 +69,7 @@ class Progress(Element):
             print(f"[Progress] Warning: <progress> is typically nested inside <div>, <section>, <article>, or <figure> (parent id={self.parent.props.get('id')})")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

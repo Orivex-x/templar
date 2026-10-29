@@ -29,11 +29,7 @@ class OrderedList(Element):
         style.set("line-height", "1.5")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log clicks on the list
-            script.on(f"#{element_id}", "click", f"console.log('OrderedList clicked: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle
@@ -61,17 +57,7 @@ class OrderedList(Element):
                     print(f"[OrderedList] Warning: <ol> should contain <li> children, found <{child.tag}>")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive DOM updates

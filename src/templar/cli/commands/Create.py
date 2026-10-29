@@ -5,7 +5,6 @@ from templar.cli.BaseCommand import BaseCommand
 
 sys.dont_write_bytecode = True
 
-
 class CreateCommand(BaseCommand):
     name = "create"
     help = "Create a new Templar project from the skeleton template"
@@ -65,19 +64,16 @@ class CreateCommand(BaseCommand):
             project_dir / "migrations",
             project_dir / "models",
             project_dir / "themes",
+            project_dir / "components",
         ):
             directory.mkdir(parents=True, exist_ok=True)
 
-        # Keep the bundled README as the single source of project guidance;
-        # only personalise its title. Replacing it here would make freshly
-        # generated projects drift from the maintained documentation.
         readme_path = project_dir / "README.md"
         readme_path.write_text(
             readme_path.read_text(encoding="utf-8").replace("# MyApp", f"# {args.name}", 1),
             encoding="utf-8",
         )
 
-        # Update requirements.txt to reference the installed templar package
         (project_dir / "requirements.txt").write_text(
             "templar\n",
             encoding="utf-8"

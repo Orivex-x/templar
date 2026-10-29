@@ -26,7 +26,6 @@ class Meta(Element):
         pass
 
     def default_scripts(self, script: Javascript):
-        """Meta tag generally does not require JS."""
         pass
 
     # -----------------------------
@@ -49,17 +48,7 @@ class Meta(Element):
         super().before_render()  # call generic logging
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive DOM updates

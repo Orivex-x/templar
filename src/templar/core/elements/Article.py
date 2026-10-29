@@ -51,15 +51,7 @@ class Article(Element):
         style.nested(" p", {"margin-bottom": "1rem"})
 
     def default_scripts(self, script: Javascript):
-        """Default JS for articles."""
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log clicks
-            script.on(f"#{element_id}", "click", "console.log('[Article] Clicked: ' + this.id);")
-            # Highlight on hover
-            script.on(f"#{element_id}", "mouseenter", "this.style.backgroundColor = '#f9f9f9';")
-            script.on(f"#{element_id}", "mouseleave", "this.style.backgroundColor = '#fff';")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -90,18 +82,7 @@ class Article(Element):
             self.props["role"] = "article"
 
     def after_render(self, html_output: str) -> str:
-        """Inject style/script after article HTML if present."""
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

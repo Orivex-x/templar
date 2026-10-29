@@ -58,12 +58,7 @@ class Button(Element):
         style.nested(":disabled", {"background-color": "#cccccc", "cursor": "not-allowed"})
 
     def default_scripts(self, script: Javascript):
-        """Default JS for button interactions."""
-        element_id = self.props.get("id")
-
-        if element_id:
-            selector = f"#{element_id}"
-            script.on(selector, "click", f"console.log('[Button] Clicked id={element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -89,18 +84,7 @@ class Button(Element):
             self.props["type"] = "button"
 
     def after_render(self, html_output: str) -> str:
-        """Inject scoped <style> and <script> after HTML if present."""
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        result = html_output
-
-        if style_block:
-            result += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            result += f"\n{script_block}"
-
-        return result
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

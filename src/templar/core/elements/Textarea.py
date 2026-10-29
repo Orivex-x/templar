@@ -56,13 +56,7 @@ class Textarea(Element):
             .set("resize", "vertical")
 
     def default_scripts(self, script: Javascript):
-        """
-        Optional JS to track input events.
-        """
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "input", f"console.log('Textarea input: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -93,20 +87,7 @@ class Textarea(Element):
             print(f"[Textarea] Warning: <textarea> element should be inside one of {allowed_parents}, not <{self.parent.tag}>.")
 
     def after_render(self, html_output: str) -> str:
-        """
-        Append scoped style/script blocks after the <textarea> HTML output.
-        """
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

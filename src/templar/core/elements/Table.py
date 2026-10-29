@@ -31,13 +31,7 @@ class Table(Element):
             .set("margin-bottom", "1rem")
 
     def default_scripts(self, script: Javascript):
-        """
-        Add default event listeners, e.g. row clicks, sorting, etc.
-        """
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "click", f"console.log('Table {element_id} clicked');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -66,20 +60,7 @@ class Table(Element):
             print(f"[Table] Warning: <table> element inside <{self.parent.tag}> may be invalid HTML.")
 
     def after_render(self, html_output: str) -> str:
-        """
-        Append scoped styles and scripts after rendering the <table>.
-        """
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

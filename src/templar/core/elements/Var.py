@@ -45,17 +45,7 @@ class Var(Element):
             print(f"[Var] Warning: <var> element may not be valid inside <{self.parent.tag}>.")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     def update_dom(self):
         return self.script.render() if self.script else ""

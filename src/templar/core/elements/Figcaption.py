@@ -44,10 +44,7 @@ class Figcaption(Element):
             .set("display", "block")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "click", f"console.log('[Figcaption] clicked: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -73,17 +70,7 @@ class Figcaption(Element):
             print(f"[Figcaption] Warning: Figcaption id={self.props.get('id')} has no <figure> parent!")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

@@ -20,11 +20,18 @@ class Template:
 
         if self._render_func is None or self._last_mtime != mtime:
             with self._reload_lock:
-                # Another request may have reloaded while this one waited.
                 mtime = self.path.stat().st_mtime
 
                 if self._render_func is None or self._last_mtime != mtime:
-                    namespace = {"__file__": str(self.path)}
+                    project_root = str(self.path.parent.parent)
+                    if project_root not in sys.path:
+                        sys.path.insert(0, project_root)
+
+                    namespace = {
+                        "__file__": str(self.path),
+                        "__name__": "__templar_template__",
+                        "__package__": None,
+                    }
 
                     try:
                         exec(self.path.read_text(), namespace)

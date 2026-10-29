@@ -38,8 +38,7 @@ class Source(Element):
         pass
 
     def default_scripts(self, script: Javascript):
-        # No scripts needed for <source>
-        pass
+        pass # No scripts needed for <source>
 
     # -----------------------------
     # Lifecycle hooks

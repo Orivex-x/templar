@@ -31,11 +31,7 @@ class Q(Element):
         style.nested("::after", {"content": "close-quote"})
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log clicks for interactive feedback
-            script.on(f"#{element_id}", "click", f"console.log('Q clicked: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -61,17 +57,7 @@ class Q(Element):
             print(f"[Q] Warning: <q> element is typically nested inside <p>, <blockquote>, <div>, or <section> (parent id={self.parent.props.get('id')})")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

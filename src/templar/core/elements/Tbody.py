@@ -30,13 +30,7 @@ class Tbody(Element):
         pass
 
     def default_scripts(self, script: Javascript):
-        """
-        Optional JS hooks for tbody container.
-        """
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "DOMNodeInserted", f"console.log('Row inserted in tbody {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -65,20 +59,7 @@ class Tbody(Element):
             print(f"[Tbody] Warning: <tbody> element should be inside <table>, not <{self.parent.tag}>.")
 
     def after_render(self, html_output: str) -> str:
-        """
-        Append scoped styles and scripts after the <tbody> HTML output.
-        """
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

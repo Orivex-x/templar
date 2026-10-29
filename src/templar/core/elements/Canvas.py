@@ -50,19 +50,7 @@ class Canvas(Element):
             .set("background-color", "#fff")
 
     def default_scripts(self, script: Javascript):
-        """Attach a sample JS drawing if id is set."""
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on("document", "DOMContentLoaded", f"""
-                var canvas = document.getElementById('{element_id}');
-                if (canvas) {{
-                    var ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#007BFF';
-                    ctx.fillRect(10, 10, 100, 50);
-                    console.log('[Canvas] Initialized drawing for #{element_id}');
-                }}
-            """)
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -92,18 +80,7 @@ class Canvas(Element):
             self.props["role"] = "img"
 
     def after_render(self, html_output: str) -> str:
-        """Inject style/script after canvas HTML if present."""
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        result = html_output
-
-        if style_block:
-            result += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            result += f"\n{script_block}"
-
-        return result
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

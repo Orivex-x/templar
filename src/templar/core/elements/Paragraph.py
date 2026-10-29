@@ -14,7 +14,7 @@ class Paragraph(Element):
 
     def __init__(
         self,
-        content: Union[str, Element, List[Element]] = None,
+        content: Union[str, Element, List[Element]],
         id: Optional[str] = None,
         classes: Optional[List[str]] = None,
         **props
@@ -28,11 +28,7 @@ class Paragraph(Element):
         style.set("margin", "0.5rem 0").set("line-height", "1.5").set("color", "#333")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-        
-        if element_id:
-            # Log clicks on the paragraph
-            script.on(f"#{element_id}", "click", f"console.log('Paragraph clicked: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle
@@ -58,17 +54,7 @@ class Paragraph(Element):
             print(f"[Paragraph] Warning: <p> should not be nested inside <{self.parent.tag}> (id={self.parent.props.get('id')})")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive DOM updates

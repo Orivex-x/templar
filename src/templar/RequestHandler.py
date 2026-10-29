@@ -15,13 +15,12 @@ from http import HTTPStatus
 
 from templar.Context import TemplarContext
 from templar.db import db
+from templar.core.ReactiveEndpoint import ReactiveEndpoint
 
 sys.dont_write_bytecode = True
 
 
 class _ChunkedWriter:
-    """Small binary writer that frames streamed output as HTTP chunks."""
-
     def __init__(self, raw) -> None:
         self.raw = raw
 
@@ -908,6 +907,14 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                 if ctx.path == "/favicon.ico":
                     self._serve_static_file(ctx, "favicon.ico", self.server.templates_dir.parent)
+
+                    return
+
+                if ctx.path == "/__templar_reactive__" and self.command == "POST":
+                    payload = ReactiveEndpoint.handle(ctx)
+                    ctx.set_status(200)
+                    ctx.set_header("Content-Type", "application/json; charset=utf-8")
+                    self._send(ctx, json.dumps(payload))
 
                     return
 

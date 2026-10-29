@@ -62,16 +62,7 @@ class Audio(Element):
             .set("outline", "none")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            selector = f"#{element_id}"
-
-            script.on(selector, "play", f"console.log('[Audio] Playing: ' + this.src);")
-            script.on(selector, "pause", f"console.log('[Audio] Paused: ' + this.src);")
-            script.on(selector, "ended", f"console.log('[Audio] Ended: ' + this.src);")
-            script.on(selector, "volumechange", f"console.log('[Audio] Volume changed: ' + this.volume);")
-            script.on(selector, "error", f"console.error('[Audio] Error loading: ' + this.src);")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -100,17 +91,7 @@ class Audio(Element):
             self.props["controls"] = "controls"
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

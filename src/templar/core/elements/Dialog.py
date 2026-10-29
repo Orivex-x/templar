@@ -46,10 +46,7 @@ class Dialog(Element):
             .set("box-shadow", "0 4px 6px rgba(0,0,0,0.1)")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "click", f"console.log('[Dialog] Clicked {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -78,17 +75,7 @@ class Dialog(Element):
             self.props["role"] = "dialog"
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        result = html_output
-
-        if style_block:
-            result += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            result += f"\n{script_block}"
-
-        return result
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

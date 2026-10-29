@@ -44,12 +44,7 @@ class Svg(Element):
         style.set("display", "inline-block").set("vertical-align", "middle")
 
     def default_scripts(self, script: Javascript):
-        """
-        Add JS behaviours to the SVG, e.g. animations or interactions.
-        """
-        element_id = self.props.get("id")
-        if element_id:
-            script.on(f"#{element_id}", "click", f"console.log('SVG {element_id} clicked');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -78,20 +73,7 @@ class Svg(Element):
             print(f"[Svg] Warning: <svg> element inside <{self.parent.tag}> may be invalid HTML.")
 
     def after_render(self, html_output: str) -> str:
-        """
-        Append scoped style/script blocks after SVG HTML output.
-        """
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

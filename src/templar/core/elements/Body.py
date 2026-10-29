@@ -44,10 +44,7 @@ class Body(Element):
             .set("color", "#333")
 
     def default_scripts(self, script: Javascript):
-        """Default JS for the <body> element."""
-        selector = "body"
-        script.on(selector, "load", "console.log('[Body] Page loaded');")
-        script.on(selector, "unload", "console.log('[Body] Page unloading');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -76,18 +73,7 @@ class Body(Element):
             self.props["role"] = "document"
 
     def after_render(self, html_output: str) -> str:
-        """Inject <style> and <script> after HTML if present."""
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

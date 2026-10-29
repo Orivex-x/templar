@@ -31,13 +31,7 @@ class Span(Element):
         style.set("color", "#000")
 
     def default_scripts(self, script: Javascript):
-        """
-        Default JS for <span>, e.g. logging click events.
-        """
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "click", f"console.log('Span clicked: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -68,20 +62,7 @@ class Span(Element):
             print(f"[Span] Warning: <span> used inside <{self.parent.tag}>")
 
     def after_render(self, html_output: str) -> str:
-        """
-        Append scoped CSS and JS after the <span> element.
-        """
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

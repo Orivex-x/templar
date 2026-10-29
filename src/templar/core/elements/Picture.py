@@ -31,11 +31,7 @@ class Picture(Element):
             .set("margin", "0 auto")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            # Log clicks on the picture element
-            script.on(f"#{element_id}", "click", f"console.log('Picture clicked: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -61,17 +57,7 @@ class Picture(Element):
             print(f"[Picture] Warning: <picture> is usually nested inside <figure>, <div>, <section>, or <article> (parent id={self.parent.props.get('id')})")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        final_output = html_output
-
-        if style_block:
-            final_output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            final_output += f"\n{script_block}"
-
-        return final_output
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive DOM patching

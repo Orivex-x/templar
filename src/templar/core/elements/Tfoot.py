@@ -29,11 +29,7 @@ class Tfoot(Element):
             .set("background-color", "#f9f9f9")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "mouseenter", f"console.log('[Tfoot] Hover: {element_id}');")
-            script.on(f"#{element_id}", "mouseleave", f"console.log('[Tfoot] Leave: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -59,17 +55,7 @@ class Tfoot(Element):
             print(f"[Tfoot] Warning: <tfoot> should be inside <table>, not <{self.parent.tag if self.parent else 'None'}>.")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     def update_dom(self):
         return self.script.render() if self.script else ""

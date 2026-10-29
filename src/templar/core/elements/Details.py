@@ -46,10 +46,7 @@ class Details(Element):
             .set("background-color", "#fafafa")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "toggle", f"console.log('[Details] Toggled {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
@@ -76,19 +73,9 @@ class Details(Element):
 
         if "role" not in self.props:
             self.props["role"] = "group"
-    
+
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        result = html_output
-
-        if style_block:
-            result += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            result += f"\n{script_block}"
-
-        return result
+        return super().after_render(html_output)
 
     # -----------------------------
     # Reactive patching

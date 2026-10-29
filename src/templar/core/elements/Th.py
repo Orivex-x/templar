@@ -33,10 +33,7 @@ class Th(Element):
             .set("font-weight", "bold")
 
     def default_scripts(self, script: Javascript):
-        element_id = self.props.get("id")
-
-        if element_id:
-            script.on(f"#{element_id}", "click", f"console.log('[Th] Clicked: {element_id}');")
+        pass
 
     def on_init(self):
         pass
@@ -56,17 +53,7 @@ class Th(Element):
             print(f"[Th] Warning: <th> should be inside <thead> or <tr>, not <{self.parent.tag if self.parent else 'None'}>.")
 
     def after_render(self, html_output: str) -> str:
-        style_block = self.style.render() if self.style else ""
-        script_block = self.script.render() if self.script else ""
-        output = html_output
-
-        if style_block:
-            output += f"\n<style>\n{style_block}\n</style>"
-
-        if script_block:
-            output += f"\n{script_block}"
-
-        return output
+        return super().after_render(html_output)
 
     def update_dom(self):
         return self.script.render() if self.script else ""

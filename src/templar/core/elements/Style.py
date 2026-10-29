@@ -47,9 +47,6 @@ class Style(Element):
             self.content = f"{self.content}\n{self.style.render()}"
 
     def after_render(self, html_output: str) -> str:
-        """
-        Returns the HTML output; <style> is self-contained.
-        """
         return html_output
 
     # -----------------------------

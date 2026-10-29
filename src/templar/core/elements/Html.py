@@ -37,11 +37,7 @@ class Html(Element):
         style.set("height", "100%").set("width", "100%").set("box-sizing", "border-box")
 
     def default_scripts(self, script: Javascript):
-        """Default JS for <html> root element."""
-        # element_id = self.props.get("id")
-        
-        # if element_id:
-        #     script.on(f"#{element_id}", "DOMContentLoaded", f"console.log('[Html] loaded: {element_id}');")
+        pass
 
     # -----------------------------
     # Lifecycle hooks
