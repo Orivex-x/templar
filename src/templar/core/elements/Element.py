@@ -96,7 +96,7 @@ class Element:
 
         for key, value in props.items():
             if key.startswith("on_") and callable(value):
-                # Event callbacks are handled separately and are never rendered as HTML attributes
+                # true event callbacks are handled separately
                 continue
 
             attr = "class" if key == "class_" else key.replace("_", "-")
@@ -243,8 +243,7 @@ class Element:
                 raise ValueError(f"Invalid HTML attribute name: {key!r}")
 
             if key.lower().startswith("on") or key.lower() in _UNSAFE_ATTRIBUTE_NAMES:
-                # Raw HTML event attributes are not allowed; framework-managed events are handled separately
-                continue
+                raise ValueError(f"Unsafe HTML attribute name: {key!r}")
 
             if value is None or value is False:
                 continue
