@@ -12,7 +12,10 @@
     --studio-radius: 12px;
 }
 
-/* Base document */
+/* =========================================
+   Base document
+   ========================================= */
+
 html,
 body,
 #templar-root {
@@ -36,7 +39,10 @@ body {
     border: 0 !important;
 }
 
-/* Application shell */
+/* =========================================
+   Application shell
+   ========================================= */
+
 #templar-studio {
     display: flex;
     box-sizing: border-box;
@@ -54,10 +60,16 @@ body {
     box-sizing: border-box;
 }
 
-/* Sidebar */
+/* =========================================
+   Sidebar
+   ========================================= */
+
 #templar-studio .studio-sidebar {
     box-sizing: border-box;
+    display: flex;
     flex: 0 0 250px;
+    flex-direction: column;
+    gap: 6px;
     width: 250px;
     padding: 28px 16px;
     background: var(--studio-sidebar);
@@ -70,36 +82,113 @@ body {
     color: var(--studio-text);
 }
 
-/* Navigation */
-#templar-studio .studio-nav-item {
+/* =========================================
+   Sidebar navigation
+   ========================================= */
+
+/* Clickable anchor */
+#templar-studio .studio-sidebar .studio-nav-link {
     display: block;
     box-sizing: border-box;
     width: 100%;
-    padding: 12px 14px;
-    margin-bottom: 6px;
-    color: var(--studio-muted);
+    padding: 0;
+    margin: 0;
+
+    color: var(--studio-muted) !important;
     background: transparent;
+    text-decoration: none !important;
+
     border: 1px solid transparent;
     border-radius: 9px;
-    text-decoration: none;
+
     transition:
         background 150ms ease,
         color 150ms ease,
         border-color 150ms ease;
 }
 
-#templar-studio .studio-nav-item:hover {
-    color: var(--studio-text);
-    background: var(--studio-raised);
+/* Default and visited links */
+#templar-studio .studio-sidebar .studio-nav-link:link,
+#templar-studio .studio-sidebar .studio-nav-link:visited {
+    color: var(--studio-muted) !important;
+    text-decoration: none !important;
 }
 
-#templar-studio .studio-nav-item.is-active {
-    color: var(--studio-accent);
+/* Inner navigation item */
+#templar-studio .studio-sidebar .studio-nav-item {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 14px;
+    margin: 0;
+
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: inherit;
+
+    transition:
+        background 150ms ease,
+        color 150ms ease;
+}
+
+/* Navigation headings */
+#templar-studio .studio-sidebar .studio-nav-item h3 {
+    margin: 0 0 5px;
+    color: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+/* Navigation descriptions */
+#templar-studio .studio-sidebar .studio-nav-item p {
+    margin: 0;
+    color: var(--studio-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+/* Hover */
+#templar-studio .studio-sidebar .studio-nav-link:hover {
+    color: var(--studio-text) !important;
+    background: var(--studio-raised);
+    border-color: var(--studio-border);
+}
+
+/* Active navigation item */
+#templar-studio .studio-sidebar .studio-nav-link:has(.studio-nav-item.is-active) {
+    color: var(--studio-accent) !important;
     background: var(--studio-accent-soft);
     border-color: rgba(139, 156, 255, 0.24);
 }
 
-/* Header */
+/* Active heading */
+#templar-studio .studio-sidebar .studio-nav-item.is-active h3 {
+    color: var(--studio-accent);
+}
+
+/* Active description */
+#templar-studio .studio-sidebar .studio-nav-item.is-active p {
+    color: var(--studio-muted);
+}
+
+/* Active hover */
+#templar-studio .studio-sidebar .studio-nav-link:has(.studio-nav-item.is-active):hover {
+    background: rgba(139, 156, 255, 0.18);
+    border-color: rgba(139, 156, 255, 0.4);
+}
+
+/* Keyboard accessibility */
+#templar-studio .studio-sidebar .studio-nav-link:focus-visible {
+    outline: 2px solid var(--studio-accent);
+    outline-offset: 3px;
+}
+
+/* =========================================
+   Header
+   ========================================= */
+
 #templar-studio .studio-header {
     padding: 26px 32px;
     background: var(--studio-bg);
@@ -116,7 +205,10 @@ body {
     color: var(--studio-muted);
 }
 
-/* Main content */
+/* =========================================
+   Main content
+   ========================================= */
+
 #templar-studio .studio-main {
     box-sizing: border-box;
     flex: 1;
@@ -137,11 +229,15 @@ body {
     line-height: 1.65;
 }
 
-#templar-studio a {
+/* General links outside the sidebar */
+#templar-studio .studio-main a {
     color: var(--studio-accent);
 }
 
-/* Panels and empty states */
+/* =========================================
+   Panels and empty states
+   ========================================= */
+
 #templar-studio .studio-panel,
 #templar-studio .studio-empty-state {
     box-sizing: border-box;
@@ -168,7 +264,10 @@ body {
     color: var(--studio-muted);
 }
 
-/* Dashboard cards */
+/* =========================================
+   Dashboard cards
+   ========================================= */
+
 #templar-studio .studio-card-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -179,7 +278,10 @@ body {
     min-width: 0;
 }
 
-/* Section headings */
+/* =========================================
+   Section headings
+   ========================================= */
+
 #templar-studio .studio-section-header {
     margin-bottom: 18px;
 }
@@ -194,7 +296,10 @@ body {
     color: var(--studio-muted);
 }
 
-/* Native tables */
+/* =========================================
+   Native tables
+   ========================================= */
+
 #templar-studio table {
     width: 100%;
     border-collapse: collapse;
@@ -217,7 +322,10 @@ body {
     text-transform: uppercase;
 }
 
-/* Form controls */
+/* =========================================
+   Form controls
+   ========================================= */
+
 #templar-studio input,
 #templar-studio select,
 #templar-studio textarea {
@@ -250,7 +358,10 @@ body {
     border-color: var(--studio-accent);
 }
 
-/* Code and preformatted output */
+/* =========================================
+   Code and preformatted output
+   ========================================= */
+
 #templar-studio code,
 #templar-studio pre {
     color: #c7d2fe;
@@ -270,7 +381,10 @@ body {
     border: 1px solid var(--studio-border);
 }
 
-/* Studio page layout */
+/* =========================================
+   Studio page layout
+   ========================================= */
+
 #templar-studio .studio-page {
     width: 100%;
     min-width: 0;
