@@ -53,55 +53,33 @@ class TaskFilter(Div):
             }),
         )
 
-        self.all_btn = Button(
-            "All",
-            id="task-filter-all",
-            data_action="all",
-            css=CSS({
-                "padding": "8px 14px",
-                "border": "1px solid #4f46e5",
-                "border-radius": "8px",
-                "background-color": "#4f46e5",
-                "color": "#ffffff",
-                "font-weight": "600",
-                "cursor": "pointer",
-            }),
-        )
+        self.all_btn = self._make_filter_button("All", "all")
+        self.open_btn = self._make_filter_button("Open", "open")
+        self.done_btn = self._make_filter_button("Done", "done")
 
-        self.open_btn = Button(
-            "Open",
-            id="task-filter-open",
-            data_action="open",
-            css=CSS({
-                "padding": "8px 14px",
-                "border": "1px solid #e2e8f0",
-                "border-radius": "8px",
-                "background-color": "#ffffff",
-                "color": "#334155",
-                "font-weight": "600",
-                "cursor": "pointer",
-            }),
-        )
-
-        self.done_btn = Button(
-            "Done",
-            id="task-filter-done",
-            data_action="done",
-            css=CSS({
-                "padding": "8px 14px",
-                "border": "1px solid #e2e8f0",
-                "border-radius": "8px",
-                "background-color": "#ffffff",
-                "color": "#334155",
-                "font-weight": "600",
-                "cursor": "pointer",
-            }),
-        )
-
-        # Register the component-level event handler after base initialization.
         self.event_handlers = {"click": self.handle_click}
-
         self._refresh_content()
+
+    def _make_filter_button(self, label: str, action: str):
+        is_active = self.filter == action
+
+        return Button(
+            label,
+            id=f"task-filter-{action}",
+            data_action=action,
+            aria_pressed=str(is_active).lower(),
+            css=CSS({
+                "padding": "8px 14px",
+                "border": ("1px solid #4f46e5" if is_active else "1px solid #e2e8f0"),
+                "border-radius": "8px",
+                "background-color": ("#4f46e5" if is_active else "#ffffff"),
+                "color": ("#ffffff" if is_active else "#334155"),
+                "font-weight": "600",
+                "cursor": "pointer",
+                "transition": "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease",
+                "box-shadow": ("0 0 0 2px rgba(79, 70, 229, 0.12)" if is_active else "none"),
+            }),
+        )
 
     def handle_click(self, payload=None):
         payload = payload or {}
@@ -128,6 +106,10 @@ class TaskFilter(Div):
 
     def _refresh_content(self):
         self.status.content = [f"Showing: {self.filter}"]
+
+        self.all_btn = self._make_filter_button("All", "all")
+        self.open_btn = self._make_filter_button("Open", "open")
+        self.done_btn = self._make_filter_button("Done", "done")
 
         toolbar = Div(
             [self.all_btn, self.open_btn, self.done_btn],
@@ -208,5 +190,4 @@ class TaskFilter(Div):
 
     def render(self):
         self._refresh_content()
-
         return super().render()
