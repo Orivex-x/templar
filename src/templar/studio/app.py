@@ -31,7 +31,7 @@ def build_studio_page(page_id: str = DEFAULT_PAGE, *, cli=None):
     item = get_navigation_item(page_id)
     render_page = PAGE_RENDERERS[item.id]
 
-    if item.id in ["overview", "config", "routes"]:
+    if item.id in ["overview", "config", "routes", "requests"]:
         content = render_page(cli) if cli is not None else render_page()
     else:
         content = render_page()

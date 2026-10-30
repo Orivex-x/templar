@@ -8,6 +8,7 @@ import select
 import ssl
 import sys
 import time
+import traceback
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from http.server import BaseHTTPRequestHandler
@@ -454,6 +455,20 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         return bool(lengths and lengths[0] > 0)
 
+    def _preview_body(self, value: str | bytes | None = None, limit: int = 400):
+        if value is None:
+            return ""
+
+        if isinstance(value, bytes):
+            text = value.decode("utf-8", errors="replace")
+        else:
+            text = str(value)
+
+        if len(text) > limit:
+            text = text[:limit] + "..."
+
+        return text
+
     def _parse_body(self, body: bytes) -> tuple[dict, object]:
         content_type = self.headers.get("Content-Type", "").split(";", 1)[0].lower()
 
@@ -885,29 +900,42 @@ class RequestHandler(BaseHTTPRequestHandler):
             try:
                 ctx = self._new_context()
 
+                request_logs.append({
+                    "message": "[Request]",
+                    "context": {
+                        "method": ctx.method,
+                        "path": ctx.path,
+                        "status": ctx.status,
+                        "template": self.server.default_route if ctx.path == "/" else ctx.path.lstrip("/"),
+                        "request": {
+                            "query": ctx.query,
+                            "form": ctx.form,
+                            "json": ctx.json,
+                            "body_preview": self._preview_body(ctx.body),
+                        },
+                        "response": {
+                            "headers": {},
+                            "body_preview": "",
+                        }
+                    }
+                })
+
                 if not self._host_is_allowed(ctx):
                     self._error(ctx, 400, "Host is not allowed")
-
                     return
 
-                # Queries frequently contain reset links, signed URLs, or API credentials. Keep both file and development
-                # console logs to the path; application code can opt into safe structured logs.
-                request_logs.append(f"[Request] {ctx.method} {ctx.path}")
                 early_response = self.server.middleware.run_before(ctx)
 
                 if early_response is not None:
                     self._send(ctx, early_response)
-
                     return
 
                 if ctx.path.startswith("/static/"):
                     self._serve_static_file(ctx, ctx.path.removeprefix("/static/"))
-
                     return
 
                 if ctx.path == "/favicon.ico":
                     self._serve_static_file(ctx, "favicon.ico", self.server.templates_dir.parent)
-
                     return
 
                 if ctx.path == "/__templar_reactive__" and self.command == "POST":
@@ -916,67 +944,117 @@ class RequestHandler(BaseHTTPRequestHandler):
                     ctx.set_header("Content-Type", "application/json; charset=utf-8")
                     self._send(ctx, json.dumps(payload))
 
+                    request_logs[-1]["context"]["response"] = {
+                        "headers": dict(ctx.response_headers),
+                        "body_preview": self._preview_body(ctx._body),
+                    }
+                    request_logs[-1]["context"]["status"] = ctx.status
                     return
 
                 if self.command == "GET" and self.server.mode == "dev" and ctx.path == "/__templar_hot_reload__":
                     template_name = str(ctx.query.get("template", self.server.default_route)).replace(".templar.py", "").replace(".templar", "")
                     self._handle_sse(ctx, template_name or self.server.default_route, request_logs)
-
                     return
 
                 self._handle_template_request(ctx)
                 renderer_template = self.server.default_route if ctx.path == "/" else ctx.path.lstrip("/")
-                request_logs.append(f"[Response] Served template: {renderer_template}")
+
+                request_logs[-1]["context"]["status"] = ctx.status
+                request_logs[-1]["context"]["template"] = renderer_template
+                request_logs[-1]["context"]["response"] = {
+                    "headers": dict(ctx.response_headers),
+                    "body_preview": self._preview_body(ctx._body),
+                }
+
+                request_logs.append({
+                    "message": "[Response]",
+                    "context": {
+                        "method": ctx.method,
+                        "path": ctx.path,
+                        "status": ctx.status,
+                        "template": renderer_template,
+                        "response": {
+                            "headers": dict(ctx.response_headers),
+                            "body_preview": self._preview_body(ctx._body),
+                        }
+                    }
+                })
+
             except _InvalidResponseHeader as exc:
                 if self._response_committed:
                     self._abort_committed_response("Unsafe response header rejected after response commitment")
-
                     return
 
                 self.server.logger.warning("Unsafe response header rejected: %s", exc)
                 ctx = locals().get("ctx") or TemplarContext(self, self.server, self.command, self.path, {}, dict(self.headers.items()), {})
                 self._prepare_safe_error(ctx)
                 self._error(ctx, 500, "Internal Server Error")
+
             except OverflowError as exc:
                 if self._response_committed:
                     self._abort_committed_response("Request body error after response commitment")
-
                     return
 
                 self.server.logger.warning("Request body rejected: %s", exc)
                 ctx = locals().get("ctx") or TemplarContext(self, self.server, self.command, self.path, {}, dict(self.headers.items()), {})
                 self._error(ctx, 413, str(exc))
+
             except TimeoutError:
                 if self._response_committed:
                     self._abort_committed_response("Request timed out after response commitment")
-
                     return
 
                 self.server.logger.warning("Request timed out")
                 self.close_connection = True
                 ctx = locals().get("ctx") or TemplarContext(self, self.server, self.command, self.path, {}, dict(self.headers.items()), {})
                 self._error(ctx, 408, "Request timed out")
+
             except _BadRequest as exc:
                 if self._response_committed:
                     self._abort_committed_response("Invalid request after response commitment")
-
                     return
 
                 self.server.logger.warning("Invalid request: %s", exc)
                 ctx = locals().get("ctx") or TemplarContext(self, self.server, self.command, self.path, {}, dict(self.headers.items()), {})
                 self._error(ctx, 400, str(exc))
+
             except Exception:
+                tb = traceback.format_exc()
+
+                self.server.logger.exception(
+                    "Unhandled request error",
+                    extra={"context": {
+                        "method": getattr(self, "command", "UNKNOWN"),
+                        "path": getattr(self, "path", "/"),
+                        "status": 500,
+                        "traceback": tb,
+                        "request": {
+                            "query": getattr(ctx, "query", {}),
+                            "form": getattr(ctx, "form", {}),
+                            "json": getattr(ctx, "json", None),
+                            "body_preview": self._preview_body(getattr(ctx, "body", b"")),
+                        },
+                        "response": {
+                            "headers": {},
+                            "body_preview": "",
+                        }
+                    }}
+                )
+
                 if self._response_committed:
                     self._abort_committed_response("Response stream aborted after headers were sent")
-
                     return
 
-                self.server.log_exception("Unhandled request error")
                 ctx = locals().get("ctx") or TemplarContext(self, self.server, self.command, self.path, {}, dict(self.headers.items()), {})
                 self._prepare_safe_error(ctx)
                 self._error(ctx, 500, "Internal Server Error")
+
             finally:
-                self.server.handle_request_logs({"http": self._log_buffer, "request": request_logs, "renderer_template": renderer_template})
+                self.server.handle_request_logs({
+                    "http": self._log_buffer,
+                    "request": request_logs,
+                    "renderer_template": renderer_template,
+                })
 
     def _abort_committed_response(self, message: str) -> None:
         """Stop a failed response without emitting a second HTTP message."""

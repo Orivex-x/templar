@@ -1,3 +1,4 @@
+import json
 import sys
 import ssl
 import hashlib
@@ -327,33 +328,36 @@ class TemplarServer(ThreadingHTTPServer):
                 handler.close()
             finally:
                 logger.removeHandler(handler)
-    
+
     def handle_request_logs(self, logs: dict) -> None:
         """
         Prints two panels:
         1. Merged HTTP + request logs (excluding static files)
         2. Renderer logs (for HTML templates only)
         """
-        # Production logs intentionally use the sanitized request entries, not BaseHTTPRequestHandler's raw request
-        # target (which includes queries).
         for entry in logs.get("request", []):
-            self.logger.info(entry)
+            if isinstance(entry, dict):
+                self.logger.info(json.dumps(entry, default=str))
+            else:
+                self.logger.info(str(entry))
 
         if self.mode != "dev":
             return
 
-        # Merge HTTP + request logs for local diagnostics only.
         combined_logs = logs.get("http", []) + logs.get("request", [])
+        filtered_logs = []
 
-        # Filter out static file logs (CSS, JS, favicon)
-        filtered_logs = [
-            entry for entry in combined_logs
-            if not any(skip in entry for skip in ("/static/", "/favicon.ico"))
-        ]
+        for entry in combined_logs:
+            if isinstance(entry, dict):
+                rendered = json.dumps(entry, default=str, sort_keys=True)
+            else:
+                rendered = str(entry)
 
-        # -----------------------------
-        # Panel 1: Request / Response
-        # -----------------------------
+            if any(skip in rendered for skip in ("/static/", "/favicon.ico")):
+                continue
+
+            filtered_logs.append(rendered)
+
         if filtered_logs:
             self.output.panel(
                 content=filtered_logs,
@@ -361,9 +365,6 @@ class TemplarServer(ThreadingHTTPServer):
                 border_style="green",
             )
 
-        # -----------------------------
-        # Panel 2: Renderer DOM
-        # -----------------------------
         renderer_template = logs.get("renderer_template")
         if renderer_template:
             matrix_log = self.renderer.get_matrix_log()

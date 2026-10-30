@@ -861,3 +861,481 @@ body {
         padding: 8px;
     }
 }
+
+/* Route inspection enhancements */
+#templar-studio .studio-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+#templar-studio .studio-stat-card {
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+#templar-studio .studio-stat-card-primary {
+    border-left: 4px solid #7c9cff;
+}
+
+#templar-studio .studio-stat-card-accent {
+    border-left: 4px solid #52c7a5;
+}
+
+#templar-studio .studio-stat-card-warning {
+    border-left: 4px solid #f0b04f;
+}
+
+#templar-studio .studio-stat-card-danger {
+    border-left: 4px solid #e76d6d;
+}
+
+#templar-studio .studio-stat-label {
+    margin: 0 0 8px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--studio-muted);
+}
+
+#templar-studio .studio-stat-card h3 {
+    margin: 0;
+    font-size: 1.7rem;
+    line-height: 1.2;
+}
+
+#templar-studio .routes-table {
+    width: 100%;
+    border: 1px solid var(--studio-border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--studio-surface);
+}
+
+#templar-studio .routes-table-header {
+    display: grid;
+    grid-template-columns: 1.3fr 2fr 1.2fr;
+    background: rgba(124, 156, 255, 0.08);
+    border-bottom: 1px solid var(--studio-border);
+}
+
+#templar-studio .routes-table-heading {
+    padding: 14px 18px;
+    font-weight: 700;
+    color: var(--studio-text);
+}
+
+#templar-studio .route-row {
+    display: grid;
+    grid-template-columns: 1.3fr 2fr 1.2fr;
+    border-bottom: 1px solid var(--studio-border);
+    min-height: 110px;
+}
+
+#templar-studio .route-row:last-child {
+    border-bottom: none;
+}
+
+#templar-studio .route-row-static {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+#templar-studio .route-row-dynamic {
+    background: rgba(240, 176, 79, 0.04);
+}
+
+#templar-studio .route-row-default {
+    background: rgba(82, 199, 165, 0.05);
+}
+
+#templar-studio .route-cell {
+    padding: 18px;
+    border-right: 1px solid var(--studio-border);
+    box-sizing: border-box;
+}
+
+#templar-studio .route-cell:last-child {
+    border-right: none;
+}
+
+#templar-studio .route-pattern-cell,
+#templar-studio .route-details-cell,
+#templar-studio .route-status-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#templar-studio .route-pattern-cell h4 {
+    margin: 0;
+    color: var(--studio-text);
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+#templar-studio .route-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+#templar-studio .route-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+#templar-studio .route-meta-static {
+    background: rgba(124, 156, 255, 0.12);
+    color: var(--studio-accent);
+    border-color: rgba(124, 156, 255, 0.2);
+}
+
+#templar-studio .route-meta-dynamic {
+    background: rgba(240, 176, 79, 0.12);
+    color: #e9ae4d;
+    border-color: rgba(240, 176, 79, 0.25);
+}
+
+#templar-studio .route-meta-default {
+    background: rgba(82, 199, 165, 0.12);
+    color: #46c39b;
+    border-color: rgba(82, 199, 165, 0.24);
+}
+
+#templar-studio .route-detail-block {
+    margin-bottom: 12px;
+}
+
+#templar-studio .route-detail-block:last-child {
+    margin-bottom: 0;
+}
+
+#templar-studio .route-field-label {
+    margin: 0 0 6px;
+    color: var(--studio-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#templar-studio .route-field-value {
+    margin: 0;
+    color: var(--studio-text);
+    word-break: break-word;
+}
+
+#templar-studio .route-param-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#templar-studio .route-param-pill {
+    display: inline-block;
+    padding: 5px 10px;
+    background: rgba(124, 156, 255, 0.12);
+    color: var(--studio-accent);
+    border: 1px solid rgba(124, 156, 255, 0.24);
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+#templar-studio .route-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+#templar-studio .route-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+#templar-studio .route-badge-default {
+    background: rgba(82, 199, 165, 0.12);
+    color: #46c39b;
+    border: 1px solid rgba(82, 199, 165, 0.23);
+}
+
+#templar-studio .route-badge-dynamic {
+    background: rgba(240, 176, 79, 0.12);
+    color: #e9ae4d;
+    border: 1px solid rgba(240, 176, 79, 0.25);
+}
+
+#templar-studio .route-badge-static {
+    background: rgba(124, 156, 255, 0.12);
+    color: var(--studio-accent);
+    border: 1px solid rgba(124, 156, 255, 0.2);
+}
+
+#templar-studio .route-badge-success {
+    background: rgba(82, 199, 165, 0.12);
+    color: #46c39b;
+    border: 1px solid rgba(82, 199, 165, 0.24);
+}
+
+#templar-studio .route-badge-danger {
+    background: rgba(231, 109, 109, 0.12);
+    color: #e76d6d;
+    border: 1px solid rgba(231, 109, 109, 0.28);
+}
+
+@media (max-width: 900px) {
+    #templar-studio .studio-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #templar-studio .routes-table-header {
+        display: none;
+    }
+
+    #templar-studio .route-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Request activity page */
+#templar-studio .request-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(170px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+#templar-studio .studio-stat-card {
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+#templar-studio .studio-stat-card-primary {
+    border-left: 4px solid #7c9cff;
+}
+
+#templar-studio .studio-stat-card-success {
+    border-left: 4px solid #52c7a5;
+}
+
+#templar-studio .studio-stat-card-warning {
+    border-left: 4px solid #f0b04f;
+}
+
+#templar-studio .studio-stat-card-danger {
+    border-left: 4px solid #e76d6d;
+}
+
+#templar-studio .studio-stat-label {
+    margin: 0 0 8px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--studio-muted);
+}
+
+#templar-studio .studio-stat-card h3 {
+    margin: 0;
+    font-size: 1.7rem;
+    line-height: 1.2;
+}
+
+#templar-studio .request-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#templar-studio .request-feed-item {
+    border: 1px solid var(--studio-border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--studio-surface);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+}
+
+#templar-studio .request-feed-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1.7fr 0.8fr 0.8fr 1.3fr;
+    gap: 12px;
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+#templar-studio .request-row-field {
+    min-width: 0;
+}
+
+#templar-studio .request-field-label {
+    margin: 0 0 6px;
+    color: var(--studio-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#templar-studio .request-field-value {
+    margin: 0;
+    color: var(--studio-text);
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+#templar-studio .request-method-badge,
+#templar-studio .request-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+#templar-studio .request-method-badge {
+    background: rgba(124, 156, 255, 0.12);
+    color: var(--studio-accent);
+    border: 1px solid rgba(124, 156, 255, 0.24);
+}
+
+#templar-studio .request-method-get {
+    background: rgba(82, 199, 165, 0.12);
+    color: #46c39b;
+    border-color: rgba(82, 199, 165, 0.24);
+}
+
+#templar-studio .request-method-post {
+    background: rgba(240, 176, 79, 0.12);
+    color: #e9ae4d;
+    border-color: rgba(240, 176, 79, 0.25);
+}
+
+#templar-studio .request-status-badge {
+    min-width: 60px;
+}
+
+#templar-studio .request-status-success {
+    background: rgba(82, 199, 165, 0.12);
+    color: #46c39b;
+    border: 1px solid rgba(82, 199, 165, 0.24);
+}
+
+#templar-studio .request-status-warning {
+    background: rgba(240, 176, 79, 0.12);
+    color: #e9ae4d;
+    border: 1px solid rgba(240, 176, 79, 0.25);
+}
+
+#templar-studio .request-status-danger {
+    background: rgba(231, 109, 109, 0.12);
+    color: #e76d6d;
+    border: 1px solid rgba(231, 109, 109, 0.28);
+}
+
+#templar-studio .request-status-neutral {
+    background: rgba(124, 156, 255, 0.12);
+    color: var(--studio-accent);
+    border: 1px solid rgba(124, 156, 255, 0.2);
+}
+
+#templar-studio .request-collapsible {
+    border-top: 1px solid var(--studio-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+#templar-studio .request-collapsible summary {
+    cursor: pointer;
+    padding: 12px 18px;
+    font-weight: 700;
+    color: var(--studio-text);
+    list-style: none;
+    user-select: none;
+}
+
+#templar-studio .request-collapsible summary::-webkit-details-marker {
+    display: none;
+}
+
+#templar-studio .request-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 18px 18px;
+}
+
+#templar-studio .request-detail-panel {
+    min-width: 0;
+    background: rgba(10, 12, 16, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+#templar-studio .request-detail-panel-wide {
+    grid-column: 1 / -1;
+}
+
+#templar-studio .request-detail-title {
+    margin: 0 0 8px;
+    color: var(--studio-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#templar-studio .request-json-block,
+#templar-studio .request-trace-block {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: #eaf2ff;
+    background: rgba(0, 0, 0, 0.20);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+#templar-studio .request-empty {
+    color: var(--studio-muted);
+    font-size: 0.82rem;
+}
+
+@media (max-width: 900px) {
+    #templar-studio .request-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #templar-studio .request-feed-row {
+        grid-template-columns: 1fr;
+    }
+
+    #templar-studio .request-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
