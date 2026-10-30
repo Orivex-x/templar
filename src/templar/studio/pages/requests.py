@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from templar.core.elements.Heading import Heading
 from templar.core.elements.Paragraph import Paragraph
 from templar.core.elements.Pre import Pre
 from templar.core.elements.Summary import Summary
+
 from templar.studio.components.EmptyState import empty_state
 
 
@@ -26,32 +28,59 @@ def _iter_log_entries(log_path: str | None):
         return []
 
     entries = []
+
     for raw in lines:
+        if not raw:
+            continue
+
+        payload = None
         try:
             payload = json.loads(raw)
         except json.JSONDecodeError:
+            payload = None
+
+        if isinstance(payload, dict):
+            message = payload.get("message")
+            if not isinstance(message, str):
+                continue
+
+            timestamp = payload.get("timestamp")
+            parsed_time = None
+            if isinstance(timestamp, str):
+                try:
+                    parsed_time = datetime.fromisoformat(timestamp)
+                except ValueError:
+                    parsed_time = None
+
+            entries.append({
+                "message": message,
+                "timestamp": parsed_time,
+                "context": payload.get("context", {}),
+            })
             continue
 
-        if not isinstance(payload, dict):
-            continue
-
-        message = payload.get("message")
-        timestamp = payload.get("timestamp")
-        if not isinstance(message, str):
-            continue
-
-        parsed_time = None
-        if isinstance(timestamp, str):
+        # Fallback for plain access logs written by BaseHTTPRequestHandler.log_message
+        # Example:
+        # [HTTP] 127.0.0.1 - "GET /index HTTP/1.1" 200 -
+        if "[HTTP]" in raw or 'HTTP/1.1' in raw:
             try:
-                parsed_time = datetime.fromisoformat(timestamp)
-            except ValueError:
-                parsed_time = None
+                method, rest = re.search(r'"(?P<method>[A-Z]+)\s+(?P<path>/[^\s"]*)\s+HTTP/\d\.\d"', raw).groups()
+            except Exception:
+                continue
 
-        entries.append({
-            "message": message,
-            "timestamp": parsed_time,
-            "context": payload.get("context", {}),
-        })
+            entries.append({
+                "message": f"[Request] {method} {rest}",
+                "timestamp": None,
+                "context": {
+                    "method": method,
+                    "path": rest,
+                    "status": 200,
+                    "template": rest.lstrip("/").split("?")[0] or "index",
+                    "request": {"query": {}, "form": {}, "json": None, "body_preview": ""},
+                    "response": {"headers": {}, "body_preview": ""},
+                },
+            })
+            continue
 
     return entries
 
@@ -91,16 +120,24 @@ def _parse_request_activity(log_path: str | None, *, limit: int = 80):
 
         timestamp = entry.get("timestamp")
 
-        if _should_skip(message, str(context.get("path", ""))):
-            continue
+        if message.startswith("[Request]"):
+            method = context.get("method")
+            path = context.get("path")
+            if not method or not path:
+                match = re.search(r"\[Request\]\s+(?P<method>[A-Z]+)\s+(?P<path>/[^\s]*)", message)
+                if match:
+                    method = match.group("method").upper()
+                    path = match.group("path")
+                else:
+                    method = "GET"
+                    path = "/"
 
-        if message == "[Request]":
-            method = context.get("method", "GET")
-            path = _normalize_route(context.get("path", "/"))
+            if _should_skip(message, str(path)):
+                continue
 
             pending = {
                 "method": method,
-                "path": path,
+                "path": _normalize_route(path),
                 "status": context.get("status", 200),
                 "template": context.get("template", ""),
                 "request": context.get("request", {}),
@@ -110,26 +147,35 @@ def _parse_request_activity(log_path: str | None, *, limit: int = 80):
             }
             continue
 
-        if message == "[Response]":
-            if pending is not None:
-                pending["template"] = context.get("template", pending.get("template", ""))
-                pending["status"] = context.get("status", pending.get("status", 200))
-                pending["response"] = context.get("response", {})
-                activity.append(dict(pending))
-                pending = None
+        if message.startswith("[Response]"):
+            if pending is None:
+                continue
+
+            match = re.search(r"\[Response\]\s+Served template:\s*(?P<template>[^\s]+)", message)
+            template_name = context.get("template") or (match.group("template").strip() if match else "")
+            pending["template"] = template_name
+            pending["status"] = context.get("status", pending.get("status", 200))
+            pending["response"] = context.get("response", {})
+            activity.append(dict(pending))
+            pending = None
             continue
 
-        if "Unhandled request error" in message and context.get("traceback"):
-            activity.append({
-                "method": context.get("method", "UNKNOWN"),
-                "path": context.get("path", "/"),
-                "status": context.get("status", 500),
-                "template": context.get("template", ""),
-                "request": context.get("request", {}),
-                "response": context.get("response", {}),
-                "error": context.get("traceback", ""),
-                "timestamp": timestamp,
-            })
+        if "Unhandled request error" in message or "Traceback" in message:
+            if context.get("traceback") or "Unhandled request error" in message:
+                path = str(context.get("path") or "/")
+                if _should_skip(message, path):
+                    continue
+
+                activity.append({
+                    "method": context.get("method", "UNKNOWN"),
+                    "path": _normalize_route(path),
+                    "status": context.get("status", 500),
+                    "template": context.get("template", ""),
+                    "request": context.get("request", {}),
+                    "response": context.get("response", {}),
+                    "error": str(context.get("traceback", "") or message),
+                    "timestamp": timestamp,
+                })
 
     return list(reversed(activity))[:limit]
 

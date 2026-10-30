@@ -57,6 +57,11 @@ class TemplarServer(ThreadingHTTPServer):
             router: Optional Router instance; auto-created if None
             renderer: Optional Renderer instance; auto-created if None
             templates_dir: Optional Path to templates directory
+            themes_dir: Optional Path to themes directory
+            static_dir: Optional Path to static assets, CSS, and JavaScript directories
+            middleware: Optional MiddlewareManager instance; auto-created if None
+            user_loader: Optional Callable that returns a dict of user data given a user object
+            port_override: Optional port override for the studio server
         """
         self.config = config
         self.output = output
@@ -331,13 +336,18 @@ class TemplarServer(ThreadingHTTPServer):
 
     def handle_request_logs(self, logs: dict) -> None:
         """
-        Prints two panels:
-        1. Merged HTTP + request logs (excluding static files)
-        2. Renderer logs (for HTML templates only)
+        Write request log entries in a parseable structured format for Studio.
         """
+        # Log structured entries correctly: message + context
         for entry in logs.get("request", []):
             if isinstance(entry, dict):
-                self.logger.info(json.dumps(entry, default=str))
+                message = str(entry.get("message", ""))
+                context = entry.get("context", {}) or {}
+
+                if message:
+                    self.logger.info(message, extra={"context": context})
+                else:
+                    self.logger.info(json.dumps(entry, default=str))
             else:
                 self.logger.info(str(entry))
 
@@ -345,15 +355,16 @@ class TemplarServer(ThreadingHTTPServer):
             return
 
         combined_logs = logs.get("http", []) + logs.get("request", [])
-        filtered_logs = []
 
+        filtered_logs = []
+        
         for entry in combined_logs:
             if isinstance(entry, dict):
                 rendered = json.dumps(entry, default=str, sort_keys=True)
             else:
                 rendered = str(entry)
 
-            if any(skip in rendered for skip in ("/static/", "/favicon.ico")):
+            if any(skip in rendered for skip in ("/static/", "/favicon.ico", "/__templar_hot_reload__")):
                 continue
 
             filtered_logs.append(rendered)
