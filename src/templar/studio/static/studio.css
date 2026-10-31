@@ -1339,3 +1339,142 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+#templar-studio .studio-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(170px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+#templar-studio .studio-stat-card {
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+#templar-studio .studio-stat-card-primary {
+    border-left: 4px solid #7c9cff;
+}
+
+#templar-studio .studio-stat-card-success {
+    border-left: 4px solid #52c7a5;
+}
+
+#templar-studio .studio-stat-card-warning {
+    border-left: 4px solid #f0b04f;
+}
+
+#templar-studio .studio-stat-card-danger {
+    border-left: 4px solid #e76d6d;
+}
+
+#templar-studio .studio-stat-label {
+    margin: 0 0 8px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--studio-muted);
+}
+
+#templar-studio .studio-stat-card h3 {
+    margin: 0;
+    font-size: 1.7rem;
+    line-height: 1.2;
+}
+
+#templar-studio .db-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+#templar-studio .db-section-label {
+    margin: 0;
+    color: var(--studio-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#templar-studio .db-action-button {
+    background: #7c9cff;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#templar-studio .db-action-button:hover {
+    filter: brightness(1.05);
+}
+
+#templar-studio .db-section-heading {
+    margin-bottom: 16px;
+}
+
+#templar-studio .db-section-copy {
+    margin: 0;
+    color: var(--studio-muted);
+    line-height: 1.5;
+}
+
+#templar-studio .db-table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+#templar-studio .db-table-card {
+    background: var(--studio-surface);
+    border: 1px solid var(--studio-border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+}
+
+#templar-studio .db-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+#templar-studio .db-table-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    word-break: break-word;
+}
+
+#templar-studio .db-table-rowcount {
+    margin: 0;
+    color: var(--studio-muted);
+    font-size: 0.8rem;
+}
+
+#templar-studio .db-table-meta {
+    border-top: 1px solid var(--studio-border);
+    padding-top: 12px;
+}
+
+#templar-studio .db-table-label {
+    margin: 0 0 6px;
+    color: var(--studio-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#templar-studio .db-table-value {
+    margin: 0;
+    color: var(--studio-text);
+    line-height: 1.5;
+    word-break: break-word;
+}

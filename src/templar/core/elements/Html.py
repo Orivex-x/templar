@@ -2,7 +2,6 @@ import sys
 from typing import Optional, Union, List
 
 from .Element import Element
-from ..Css import CSS
 from ..Javascript import Javascript
 
 sys.dont_write_bytecode = True

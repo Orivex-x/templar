@@ -219,51 +219,58 @@ class Element:
                 return response.json();
             }})
             .then(data => {{
-                if (!data || !data.html) return;
-
-                // Parse the complete server response without inserting it
-                // directly into the existing root.
-                const parsed = new DOMParser().parseFromString(
-                    data.html,
-                    "text/html"
-                );
-
-                const updatedRoot = parsed.getElementById(rootId);
-                const currentRoot = document.getElementById(rootId);
-
-                if (!updatedRoot || !currentRoot) {{
+                if (!data || !data.ok) {{
                     console.error(
-                        "Templar reactive update: component root not found.",
-                        rootId
+                        "Templar reactive event failed:",
+                        data?.error ?? "Unknown error"
                     );
                     return;
                 }}
 
-                // Copy only the new root's children. Never insert the root
-                // itself inside the existing root.
-                currentRoot.replaceChildren(
-                    ...Array.from(updatedRoot.childNodes)
-                );
+                // Update only the element specified by the server.
+                if (data.target_id && typeof data.html === "string") {{
+                    const targetElement = document.getElementById(data.target_id);
+            
+                    if (!targetElement) {{
+                        console.error("Templar reactive update: target element not found.", data.target_id);
+    
+                        return;
+                    }}
+            
+                    targetElement.innerHTML = data.html;
+                    return;        
+                }}
 
-                // Collect style blocks returned by the server render.
-                const styleText = Array.from(
-                    parsed.querySelectorAll("style")
-                )
-                .map(style => style.textContent || "")
-                .filter(Boolean)
-                .join("\\\\n");
-
-                // Keep reactive styles outside the component DOM so they
-                // survive subsequent child updates.
+                // Component-level update behaviour for handlers that return a complete component render.
+                if (!data.html) return;
+            
+                const parsed = new DOMParser().parseFromString(data.html, "text/html");
+            
+                const updatedRoot = parsed.getElementById(rootId);
+                const currentRoot = document.getElementById(rootId);
+            
+                if (!updatedRoot || !currentRoot) {{
+                    console.error("Templar reactive update: component root not found.", rootId);
+                    
+                    return;
+                }}
+            
+                currentRoot.replaceChildren(...Array.from(updatedRoot.childNodes));
+            
+                const styleText = Array.from(parsed.querySelectorAll("style"))
+                    .map(style => style.textContent || "")
+                    .filter(Boolean)
+                    .join("\\n");
+            
                 let stylesheet = document.getElementById(stylesheetId);
-
+            
                 if (styleText) {{
                     if (!stylesheet) {{
                         stylesheet = document.createElement("style");
                         stylesheet.id = stylesheetId;
                         document.head.appendChild(stylesheet);
                     }}
-
+            
                     stylesheet.textContent = styleText;
                 }}
             }})

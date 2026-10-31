@@ -10,27 +10,43 @@ class ReactiveEndpoint:
 
     @staticmethod
     def handle(request):
-        body = request.body.decode("utf-8") if getattr(request, "body", None) else "{}"
+        body = (request.body.decode("utf-8") if getattr(request, "body", None) else "{}")
+
         payload = json.loads(body or "{}")
 
-        component_id: str = payload.get("component_id")
-        event_name: str = payload.get("event_name")
+        component_id = payload.get("component_id")
+        event_name = payload.get("event_name")
 
         component = LiveElementRegistry.get(component_id)
 
         if component is None:
-            return {"ok": False, "error": "component_not_found"}
+            return {
+                "ok": False,
+                "error": "component_not_found"
+            }
 
         handler = component.event_handlers.get((event_name or "").lower())
 
         if handler is None:
-            return {"ok": False, "error": "handler_not_found"}
+            return {
+                "ok": False,
+                "error": "handler_not_found"
+            }
 
-        try:
-            result = handler(payload)
-        except TypeError:
-            result = handler()
+        result = handler(payload)
 
+        # A handler can specify an individual DOM element to update.
+        if isinstance(result, dict) and {
+            "target_id",
+            "html"
+        }.issubset(result):
+            return {
+                "ok": True,
+                "target_id": result["target_id"],
+                "html": result["html"]
+            }
+
+        # Component-rendering.
         if hasattr(component, "render"):
             return {
                 "ok": True,
