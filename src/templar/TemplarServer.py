@@ -338,11 +338,16 @@ class TemplarServer(ThreadingHTTPServer):
         """
         Write request log entries in a parseable structured format for Studio.
         """
-        # Log structured entries correctly: message + context
         for entry in logs.get("request", []):
             if isinstance(entry, dict):
                 message = str(entry.get("message", ""))
                 context = entry.get("context", {}) or {}
+
+                method = context.get("method")
+                path = context.get("path")
+
+                if message == "[Request]" and method and path:
+                    message = f"[Request] {method} {path}"
 
                 if message:
                     self.logger.info(message, extra={"context": context})
@@ -351,13 +356,10 @@ class TemplarServer(ThreadingHTTPServer):
             else:
                 self.logger.info(str(entry))
 
-        if self.mode != "dev":
-            return
-
         combined_logs = logs.get("http", []) + logs.get("request", [])
 
         filtered_logs = []
-        
+
         for entry in combined_logs:
             if isinstance(entry, dict):
                 rendered = json.dumps(entry, default=str, sort_keys=True)

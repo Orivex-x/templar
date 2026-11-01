@@ -891,6 +891,67 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         self._send(ctx, html)
 
+    def _safe_request_body_preview(self, ctx, limit: int = 400) -> str:
+        content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+
+        if content_type == "application/json":
+            value = self._redact_sensitive(ctx.json)
+
+        elif content_type == "application/x-www-form-urlencoded":
+            value = self._redact_sensitive(ctx.form)
+
+        else:
+            return ""
+
+        try:
+            preview = json.dumps(value, ensure_ascii=False, default=str)
+        except (TypeError, ValueError):
+            return ""
+
+        if len(preview) > limit:
+            preview = preview[:limit] + "..."
+
+        return preview
+
+    @staticmethod
+    def _redact_sensitive(value):
+        sensitive_names = {
+            "password",
+            "passwd",
+            "secret",
+            "token",
+            "accesstoken",
+            "refreshtoken",
+            "apikey",
+            "authorization",
+            "cookie",
+            "session",
+        }
+
+        if isinstance(value, dict):
+            redacted = {}
+
+            for key, item in value.items():
+                normalized_key = re.sub(r"[^a-z0-9]", "", str(key).lower())
+
+                if (
+                    normalized_key in sensitive_names
+                    or normalized_key.endswith("token")
+                    or normalized_key.endswith("secret")
+                    or normalized_key.endswith("password")
+                    or normalized_key.endswith("apikey")
+                ):
+                    redacted[key] = "[REDACTED]"
+                else:
+                    redacted[key] = RequestHandler._redact_sensitive(item)
+
+            return redacted
+
+        if isinstance(value, (list, tuple)):
+            return [RequestHandler._redact_sensitive(item) for item in value]
+
+        return value
+
     def _handle(self) -> None:
         self._log_buffer = []
         request_logs: list = []
@@ -901,17 +962,17 @@ class RequestHandler(BaseHTTPRequestHandler):
                 ctx = self._new_context()
 
                 request_logs.append({
-                    "message": "[Request]",
+                    "message": f"[Request] {ctx.method} {ctx.path}",
                     "context": {
                         "method": ctx.method,
                         "path": ctx.path,
                         "status": ctx.status,
                         "template": self.server.default_route if ctx.path == "/" else ctx.path.lstrip("/"),
                         "request": {
-                            "query": ctx.query,
-                            "form": ctx.form,
-                            "json": ctx.json,
-                            "body_preview": self._preview_body(ctx.body),
+                            "query": self._redact_sensitive(ctx.query),
+                            "form": self._redact_sensitive(ctx.form),
+                            "json": self._redact_sensitive(ctx.json),
+                            "body_preview": self._safe_request_body_preview(ctx),
                         },
                         "response": {
                             "headers": {},
@@ -946,7 +1007,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                     request_logs[-1]["context"]["response"] = {
                         "headers": dict(ctx.response_headers),
-                        "body_preview": self._preview_body(ctx._body),
+                        "body_preview": "",
                     }
                     request_logs[-1]["context"]["status"] = ctx.status
                     return
@@ -963,7 +1024,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 request_logs[-1]["context"]["template"] = renderer_template
                 request_logs[-1]["context"]["response"] = {
                     "headers": dict(ctx.response_headers),
-                    "body_preview": self._preview_body(ctx._body),
+                    "body_preview": "",
                 }
 
                 request_logs.append({
@@ -975,7 +1036,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                         "template": renderer_template,
                         "response": {
                             "headers": dict(ctx.response_headers),
-                            "body_preview": self._preview_body(ctx._body),
+                            "body_preview": "",
                         }
                     }
                 })
@@ -1020,40 +1081,70 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             except Exception:
                 tb = traceback.format_exc()
+                request_ctx = locals().get("ctx")
 
                 self.server.logger.exception(
                     "Unhandled request error",
-                    extra={"context": {
-                        "method": getattr(self, "command", "UNKNOWN"),
-                        "path": getattr(self, "path", "/"),
-                        "status": 500,
-                        "traceback": tb,
-                        "request": {
-                            "query": getattr(ctx, "query", {}),
-                            "form": getattr(ctx, "form", {}),
-                            "json": getattr(ctx, "json", None),
-                            "body_preview": self._preview_body(getattr(ctx, "body", b"")),
-                        },
-                        "response": {
-                            "headers": {},
-                            "body_preview": "",
+                    extra={
+                        "context": {
+                            "method": getattr(self, "command", "UNKNOWN"),
+                            "path": getattr(self, "path", "/"),
+                            "status": 500,
+                            "traceback": tb,
+                            "request": {
+                                "query": self._redact_sensitive(getattr(request_ctx, "query", {})),
+                                "form": self._redact_sensitive(getattr(request_ctx, "form", {})),
+                                "json": self._redact_sensitive(getattr(request_ctx, "json", None)),
+                                "body_preview": ""
+                            },
+                            "response": {
+                                "headers": {},
+                                "body_preview": ""
+                            }
                         }
-                    }}
+                    }
                 )
 
                 if self._response_committed:
                     self._abort_committed_response("Response stream aborted after headers were sent")
+
                     return
 
-                ctx = locals().get("ctx") or TemplarContext(self, self.server, self.command, self.path, {}, dict(self.headers.items()), {})
+                ctx = request_ctx or TemplarContext(
+                    self,
+                    self.server,
+                    self.command,
+                    self.path,
+                    {},
+                    dict(self.headers.items()),
+                    {}
+                )
+
                 self._prepare_safe_error(ctx)
                 self._error(ctx, 500, "Internal Server Error")
 
+
             finally:
+                request_ctx = locals().get("ctx")
+
+                if request_ctx is not None:
+                    for entry in request_logs:
+                        context = entry.get("context", {})
+
+                        if entry.get("message", "").startswith("[Request]"):
+                            context["status"] = request_ctx.status
+
+                        if "request" in context:
+                            context["request"] = self._redact_sensitive(context["request"])
+
+                        if "response" in context:
+                            context["response"] = self._redact_sensitive(context["response"])
+                            context["response"]["body_preview"] = ""
+
                 self.server.handle_request_logs({
                     "http": self._log_buffer,
                     "request": request_logs,
-                    "renderer_template": renderer_template,
+                    "renderer_template": renderer_template
                 })
 
     def _abort_committed_response(self, message: str) -> None:
@@ -1182,9 +1273,9 @@ class RequestHandler(BaseHTTPRequestHandler):
             port = raw_port if separator else None
 
             if not re.fullmatch(
-                r"(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*"
-                r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?",
-                host,
+                    r"(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*"
+                    r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?",
+                    host,
             ):
                 return None
 
