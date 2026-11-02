@@ -74,7 +74,7 @@ class CompletionCommand(BaseCommand):
         if not generator:
             raise RuntimeError(
                 "Argcomplete's completion generator was not found. "
-                "Reinstall Templar with `python -m pip install -e \".[dev]\"`."
+                "Reinstall Templar with `python3 -m pip install -e \".[dev]\"`."
             )
 
         completed = subprocess.run(

@@ -13,6 +13,8 @@ my-app/
 │   ├── index.templar.py     # Home page route (/)
 │   └── about.templar.py     # About page route (/about)
 │
+├── components/              # Marketplace components
+├── utilities/               # Marketplace utility modules
 ├── static/                  # Static assets served at /static/
 │   ├── css/                 # Custom CSS stylesheets
 │   ├── js/                  # Client-side JavaScript scripts
@@ -22,6 +24,8 @@ my-app/
 │   ├── light.templar.py     # Light mode theme colors & styling
 │   └── dark.templar.py      # Dark mode theme colors & styling
 │
+├── components/              # Reusable application and UI components
+├── utilities/               # Reusable project helper modules
 ├── forms/                   # Form schemas and validation classes (optional)
 ├── models/                  # Active Record database models (optional)
 ├── db/                      # SQLite database files and migration scripts
@@ -71,3 +75,9 @@ Contains theme definitions (`light.templar.py`, `dark.templar.py`) providing coh
 
 ### 6. `db/` & `db/migrations/`
 Houses the local SQLite database (`dev.db`) and timestamped migration files created via `templar migrate create`.
+
+### Marketplace package installation
+`templar marketplace install` reads the package manifest's `type` and installs
+its files into the matching project directory: `template` to `templates/`,
+`theme` to `themes/`, `component` to `components/`, and `utility` to
+`utilities/`. Package file paths are relative to that destination directory.

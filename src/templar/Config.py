@@ -383,8 +383,8 @@ class Config:
         """Convert active-environment path keys to project-relative absolutes."""
         PATH_KEYS = [
             "ssl_cert_path", "ssl_key_path", "log_file", "migrations_dir",
-            "logs_dir", "templates_dir", "themes_dir", "static_dir",
-            "marketplace_registry_dir", "marketplace_assets_dir",
+            "logs_dir", "templates_dir", "themes_dir", "components_dir",
+            "utilities_dir", "static_dir", "marketplace_registry_dir",
         ]
 
         # Base project root for this config
@@ -401,12 +401,9 @@ class Config:
 
         cfg.setdefault("templates_dir", os.path.join(base_root, "templates"))
         cfg.setdefault("themes_dir", os.path.join(base_root, "themes"))
+        cfg.setdefault("components_dir", os.path.join(base_root, "components"))
+        cfg.setdefault("utilities_dir", os.path.join(base_root, "utilities"))
         cfg.setdefault("static_dir", os.path.join(base_root, "static"))
-        # The registry is Templar's verified package cache. Marketplace
-        # downloads are materialised separately beneath static assets so an
-        # application has one predictable, publicly servable install root.
-        cfg.setdefault("marketplace_assets_dir", os.path.join(base_root, "static", "assets", "marketplace"))
-
     # ---------------------
     # Key Validation
     # ---------------------

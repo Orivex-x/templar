@@ -1,11 +1,32 @@
+import getpass
+import os
 import sys
+from urllib.parse import urlparse
+
+import requests
 from templar.cli.BaseCommand import BaseCommand
 
 sys.dont_write_bytecode = True
 
+MARKETPLACE_API_URL = os.environ.get(
+    "TEMPLAR_MARKETPLACE_API_URL",
+    "http://127.0.0.1:8080/api",
+).rstrip("/")
+
+
+def _is_loopback_url(url: str) -> bool:
+    parsed = urlparse(url)
+    return parsed.scheme == "http" and parsed.hostname in {"localhost", "127.0.0.1", "::1"}
+
+
+def _require_secure_registry(url: str) -> None:
+    if urlparse(url).scheme != "https" and not _is_loopback_url(url):
+        raise ValueError("Marketplace credentials and packages require HTTPS outside localhost.")
+
+
 class MarketplacePackCommand(BaseCommand):
     name = "marketplace-pack"
-    help = "Build a signed-marketplace package artifact"
+    help = "Build a marketplace package artifact"
 
     @staticmethod
     def add_args(parser) -> None:
@@ -33,7 +54,12 @@ class MarketplaceInstallCommand(BaseCommand):
             self.output.error(f"Unrecognized arguments: {' '.join(extra_args)}", title="Marketplace Error")
             sys.exit(1)
 
-        self._run("install", name=args.name, version=args.version)
+        self._run(
+            "install",
+            name=args.name,
+            version=args.version,
+            remote_url=MARKETPLACE_API_URL,
+        )
 
 class MarketplacePublishCommand(BaseCommand):
     name = "marketplace-publish"
@@ -42,76 +68,42 @@ class MarketplacePublishCommand(BaseCommand):
     @staticmethod
     def add_args(parser) -> None:
         parser.add_argument("pkg_file")
-        parser.add_argument("--signature-file", help="Detached signature (defaults to <pkg_file>.asc)")
-        parser.add_argument("--public-key-file", help="Optional armored public key to upload")
+        parser.add_argument("--username", help="Marketplace account username or email")
 
     def run(self, args, extra_args=None) -> None:
         if extra_args:
             self.output.error(f"Unrecognized arguments: {' '.join(extra_args)}", title="Marketplace Error")
             sys.exit(1)
 
-        self._run(
-            "publish",
-            pkg_file=args.pkg_file,
-            signature_file=args.signature_file,
-            public_key_file=args.public_key_file,
-        )
+        try:
+            _require_secure_registry(MARKETPLACE_API_URL)
+            username = getattr(args, "username", None) or input("Marketplace username or email: ").strip()
+            if not username:
+                raise ValueError("A marketplace username or email is required.")
 
+            password = getpass.getpass("Marketplace password: ")
+            if not password:
+                raise ValueError("A marketplace password is required.")
 
-class MarketplaceImportKeyCommand(BaseCommand):
-    name = "marketplace-import-key"
-    help = "Import a marketplace signing public key"
+            response = requests.post(
+                f"{MARKETPLACE_API_URL}/login",
+                json={"username_or_email": username, "password": password},
+                timeout=15,
+                allow_redirects=False,
+            )
+            response.raise_for_status()
+            login = response.json()
+            data = login.get("Data") if isinstance(login, dict) and login.get("Status") else None
+            token = data.get("access_token") if isinstance(data, dict) else None
+            if not token:
+                raise RuntimeError("Marketplace login response did not contain an access token.")
 
-    @staticmethod
-    def add_args(parser) -> None:
-        parser.add_argument("key_file")
-        parser.add_argument("--trust", action="store_true", help="Add the imported fingerprint to the active project config")
-
-    def run(self, args, extra_args=None) -> None:
-        if extra_args:
-            self.output.error(f"Unrecognized arguments: {' '.join(extra_args)}", title="Marketplace Error")
-            sys.exit(1)
-
-        self._run("import-key", key_file=args.key_file, trust=args.trust)
-
-class MarketplaceSignCommand(BaseCommand):
-    name = "marketplace-sign"
-    help = "Sign a package"
-
-    @staticmethod
-    def add_args(parser) -> None:
-        parser.add_argument("pkg_file")
-        parser.add_argument("--keyid")
-        parser.add_argument("--passphrase")
-
-    def run(self, args, extra_args=None) -> None:
-        if extra_args:
-            self.output.error(f"Unrecognized arguments: {' '.join(extra_args)}", title="Marketplace Error")
-            sys.exit(1)
-
-        self._run(
-            "sign",
-            pkg_file=args.pkg_file,
-            keyid=args.keyid,
-            passphrase=args.passphrase,
-        )
-
-class MarketplaceVerifyCommand(BaseCommand):
-    name = "marketplace-verify"
-    help = "Verify a package signature"
-
-    @staticmethod
-    def add_args(parser) -> None:
-        parser.add_argument("pkg_file")
-        parser.add_argument("sig_file")
-
-    def run(self, args, extra_args=None) -> None:
-        if extra_args:
-            self.output.error(f"Unrecognized arguments: {' '.join(extra_args)}", title="Marketplace Error")
-            sys.exit(1)
-
-        self._run(
-            "verify",
-            pkg_file=args.pkg_file,
-            sig_file=args.sig_file,
-        )
+            self._run(
+                "publish",
+                pkg_file=args.pkg_file,
+                access_token=token,
+                remote_url=MARKETPLACE_API_URL,
+            )
+        except (requests.RequestException, ValueError, RuntimeError) as exc:
+            self.output.error(str(exc), title="Marketplace Error")
+            sys.exit(2)

@@ -9,7 +9,7 @@ This project was created with Templar. Pages are Python template modules in
 python3 -m venv .venv
 # macOS/Linux: source .venv/bin/activate
 # Windows PowerShell: .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 templar run
 ```
 
@@ -24,6 +24,8 @@ change. `templar run --prod` uses the production configuration for that run.
 ├── templates/             # *.templar.py pages
 ├── static/                # CSS, JavaScript, images, and other public files
 ├── themes/                # Python theme modules
+├── components/            # Reusable application and UI components
+├── utilities/             # Reusable project helper modules
 ├── migrations/            # tracked database migrations
 ├── models/                # application models (optional)
 ├── templar.config.yml     # dev and prod settings

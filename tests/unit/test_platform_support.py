@@ -37,7 +37,7 @@ def test_ssh_deployment_uses_portable_openssh_commands(monkeypatch, tmp_path):
             "user": "deploy",
             "dest": "/srv/app",
             "ssh_key": "key.pem",
-            "remote_commands": ["python -m pip install -r requirements.txt"],
+            "remote_commands": ["python3 -m pip install -r requirements.txt"],
         },
     )
 

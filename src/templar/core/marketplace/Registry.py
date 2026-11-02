@@ -4,6 +4,9 @@ from typing import Dict, List
 
 sys.dont_write_bytecode = True
 
+PACKAGE_TYPES = frozenset({"template", "utility", "theme", "component"})
+
+
 class Registry:
     """Local registry interface (can be extended to remote)."""
 
@@ -41,8 +44,15 @@ class Registry:
         name = self._component(name, "name")
         version = self._component(version, "version")
 
-        if not isinstance(manifest, dict) or manifest.get("name") != name or str(manifest.get("version")) != version:
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("name") != name
+            or str(manifest.get("version")) != version
+        ):
             raise ValueError("Package manifest name and version must match the requested package")
+
+        if not isinstance(manifest.get("type"), str) or manifest["type"] not in PACKAGE_TYPES:
+            raise ValueError(f"Package manifest type must be one of: {', '.join(sorted(PACKAGE_TYPES))}")
 
         pkg_dir = (self.base / name / version).resolve()
 

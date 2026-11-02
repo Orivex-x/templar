@@ -1,14 +1,21 @@
 import pytest
+import requests
 
 from templar.core.marketplace.DependencyResolver import DependencyResolver
-from templar.core.marketplace.GPGManager import GPGManager
 from templar.core.marketplace.MarketplaceManager import MarketplaceManager, DEFAULT_MAX_MANIFEST_BYTES
 from templar.core.marketplace.Registry import Registry
 from templar.core.marketplace.SemVer import SemVer
 
 
 def manifest(name="demo", version="1.0.0"):
-    return {"name": name, "version": version, "author": "test", "description": "test", "license": "MIT"}
+    return {
+        "name": name,
+        "version": version,
+        "type": "component",
+        "author": "test",
+        "description": "test",
+        "license": "MIT",
+    }
 
 
 def test_registry_rejects_path_traversal_and_manifest_mismatches(tmp_path):
@@ -41,37 +48,144 @@ def test_marketplace_fetches_missing_transitive_dependencies(tmp_path, monkeypat
         tmp_path / "registry",
         assets_dir=tmp_path / "marketplace-assets",
         remote_url="https://marketplace.test",
+        install_dirs={
+            "component": str(tmp_path / "components"),
+            "utility": str(tmp_path / "utilities"),
+        },
     )
     packages = {
         "root": manifest("root", "1.0.0") | {"dependencies": {"child": "^1.0.0"}},
-        "child": manifest("child", "1.2.0"),
+        "child": manifest("child", "1.2.0") | {"type": "utility"},
     }
 
     monkeypatch.setattr(manager, "_fetch_remote_versions", lambda name: [packages[name]["version"]])
     monkeypatch.setattr(
         manager,
+        "_fetch_remote_scan",
+        lambda name, version: {
+            "scan_status": "clean",
+            "scan_completed_at": 1_798_000_000,
+            "scan_engine": "ClamAV test",
+            "scan_findings": [],
+        },
+    )
+    monkeypatch.setattr(
+        manager,
         "_fetch_remote_package",
-        lambda name, version: (packages[name], {"asset.txt": name}),
+        lambda name, version: (
+            packages[name],
+            {"asset.txt": name},
+            {
+                "scan_status": "clean",
+                "scan_completed_at": 1_798_000_000,
+                "scan_engine": "ClamAV test",
+                "scan_findings": [],
+            },
+        ),
     )
 
     installed = manager.install("root")
 
     assert installed["root"]["version"] == "1.0.0"
+    assert installed["root"]["scan_status"] == "clean"
+    assert installed["root"]["scan_completed_at"] == 1_798_000_000
     assert installed["child"]["version"] == "1.2.0"
     assert manager.registry.get_manifest("child", "1.2.0")["name"] == "child"
-    assert (tmp_path / "marketplace-assets" / "root" / "1.0.0" / "asset.txt").read_text() == "root"
-    assert (tmp_path / "marketplace-assets" / "child" / "1.2.0" / "asset.txt").read_text() == "child"
-    assert installed["root"]["asset_path"] == str(tmp_path / "marketplace-assets" / "root" / "1.0.0")
+    assert (tmp_path / "components" / "asset.txt").read_text() == "root"
+    assert (tmp_path / "utilities" / "asset.txt").read_text() == "child"
+    assert installed["root"]["asset_path"] == str(tmp_path / "components")
 
 
-def test_marketplace_assets_are_versioned_and_stay_within_the_configured_root(tmp_path):
-    manager = MarketplaceManager(tmp_path / "registry", assets_dir=tmp_path / "assets")
+def test_marketplace_installs_files_into_the_type_specific_project_directory(tmp_path):
+    manager = MarketplaceManager(
+        tmp_path / "registry",
+        assets_dir=tmp_path / "assets",
+        install_dirs={"component": str(tmp_path / "components")},
+    )
     manager.registry.store_package("demo", "1.0.0", manifest(), {"images/logo.svg": "<svg/>"})
 
     installed = manager.install("demo")
 
-    assert (tmp_path / "assets" / "demo" / "1.0.0" / "images" / "logo.svg").read_text() == "<svg/>"
+    assert (tmp_path / "components" / "images" / "logo.svg").read_text() == "<svg/>"
     assert installed["demo"]["installed_path"] == str(tmp_path / "registry" / "demo" / "1.0.0")
+
+
+@pytest.mark.parametrize(
+    ("package_type", "directory"),
+    [
+        ("template", "templates"),
+        ("utility", "utilities"),
+        ("theme", "themes"),
+        ("component", "components"),
+    ],
+)
+def test_marketplace_install_routes_each_package_type_to_its_project_directory(
+    tmp_path, package_type, directory
+):
+    destinations = {
+        package_type: str(tmp_path / directory)
+        for package_type, directory in [
+            ("template", "templates"),
+            ("utility", "utilities"),
+            ("theme", "themes"),
+            ("component", "components"),
+        ]
+    }
+    manager = MarketplaceManager(tmp_path / "registry", install_dirs=destinations)
+    pkg_manifest = manifest() | {"type": package_type}
+    manager.registry.store_package("demo", "1.0.0", pkg_manifest, {"entry.py": "pass"})
+
+    manager.install("demo")
+
+    assert (tmp_path / directory / "entry.py").read_text() == "pass"
+
+
+def test_marketplace_command_uses_configured_type_directories(tmp_path, monkeypatch):
+    from templar.Marketplace import run_marketplace_command
+
+    project_paths = {
+        "project_root": tmp_path,
+        "templates_dir": tmp_path / "custom-templates",
+        "themes_dir": tmp_path / "custom-themes",
+        "components_dir": tmp_path / "custom-components",
+        "utilities_dir": tmp_path / "custom-utilities",
+    }
+
+    class Config:
+        def get(self, key, default=None):
+            return project_paths.get(key, default)
+
+    captured = {}
+
+    class FakeManager:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def install(self, name, version):
+            return name, version
+
+    monkeypatch.setattr("templar.Marketplace.MarketplaceManager", FakeManager)
+    result = run_marketplace_command("install", config=Config(), name="demo", version="1.0.0")
+
+    assert result == ("demo", "1.0.0")
+    assert captured["install_dirs"] == {
+        "template": project_paths["templates_dir"],
+        "theme": project_paths["themes_dir"],
+        "component": project_paths["components_dir"],
+        "utility": project_paths["utilities_dir"],
+    }
+
+
+def test_package_manifest_requires_a_supported_type(tmp_path):
+    source = tmp_path / "package"
+    source.mkdir()
+    (source / "manifest.json").write_text(
+        __import__("json").dumps(manifest() | {"type": "unknown"}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Manifest type"):
+        MarketplaceManager(tmp_path / "registry").pack(source, tmp_path / "package.json")
 
 
 class _RemoteResponse:
@@ -90,49 +204,77 @@ class _RemoteResponse:
         return None
 
 
-class _SignatureVerifier:
-    def __init__(self, fingerprint):
-        self.fingerprint = fingerprint
-        self.payload = None
-        self.signature = None
-
-    def verify_data(self, payload, signature):
-        self.payload = payload
-        self.signature = signature
-        return True, "valid", self.fingerprint
-
-
-def test_remote_package_requires_a_signature_from_a_trusted_key(tmp_path, monkeypatch):
-    fingerprint = "A" * 40
-    manager = MarketplaceManager(
-        tmp_path / "registry",
-        remote_url="https://marketplace.test",
-        trusted_fingerprints=[fingerprint],
-    )
-    verifier = _SignatureVerifier(fingerprint)
-    manager.gpg = verifier
+def test_remote_package_installs_without_signing_or_key_setup(tmp_path, monkeypatch):
+    manager = MarketplaceManager(tmp_path / "registry", remote_url="https://marketplace.test")
     remote_manifest = manifest()
     remote_files = {"asset.txt": "aGVsbG8="}
+    requested_urls = []
+    redirect_settings = []
 
-    def get(url, timeout, stream=False):
+    def get(url, timeout, stream=False, allow_redirects=True):
+        requested_urls.append(url)
+        redirect_settings.append(allow_redirects)
+        if url.endswith("/scan"):
+            return _RemoteResponse({
+                "scan_status": "clean",
+                "scan_completed_at": 1_798_000_000,
+                "scan_engine": "ClamAV 1.4.2/28057",
+                "scan_findings": [],
+            })
+
         if url.endswith("/manifest"):
             return _RemoteResponse(remote_manifest)
 
         if url.endswith("/files"):
             return _RemoteResponse(remote_files)
 
-        if url.endswith("/signature"):
-            return _RemoteResponse(content=b"detached-signature")
-
         raise AssertionError(url)
 
     monkeypatch.setattr("templar.core.marketplace.MarketplaceManager.requests.get", get)
-    package_manifest, files = manager._fetch_remote_package("demo", "1.0.0")
+    package_manifest, files, scan_info = manager._fetch_remote_package("demo", "1.0.0")
 
     assert package_manifest == remote_manifest
     assert files == {"asset.txt": "hello"}
-    assert verifier.signature == b"detached-signature"
-    assert verifier.payload == manager.remote_signature_payload(remote_manifest, remote_files)
+    assert scan_info["scan_status"] == "clean"
+    assert requested_urls == [
+        "https://marketplace.test/packages/demo/1.0.0/scan",
+        "https://marketplace.test/packages/demo/1.0.0/manifest",
+        "https://marketplace.test/packages/demo/1.0.0/files",
+    ]
+    assert redirect_settings == [False, False, False]
+
+
+def test_remote_package_rejects_redirect_responses(tmp_path, monkeypatch):
+    manager = MarketplaceManager(tmp_path / "registry", remote_url="https://marketplace.test")
+
+    class RedirectResponse:
+        status_code = 302
+        headers = {}
+
+        def raise_for_status(self):
+            pass
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(
+        "templar.core.marketplace.MarketplaceManager.requests.get",
+        lambda *args, **kwargs: RedirectResponse(),
+    )
+
+    with pytest.raises(RuntimeError, match="redirects are not allowed"):
+        manager._fetch_remote_package("demo", "1.0.0")
+
+
+def test_remote_package_rejects_missing_or_non_clean_scan_status(tmp_path, monkeypatch):
+    manager = MarketplaceManager(tmp_path / "registry", remote_url="https://marketplace.test")
+    monkeypatch.setattr(
+        "templar.core.marketplace.MarketplaceManager.requests.get",
+        lambda *args, **kwargs: _RemoteResponse({"scan_status": "pending"}),
+    )
+
+    with pytest.raises(RuntimeError, match="does not have a valid clean security scan"):
+        manager._fetch_remote_package("demo", "1.0.0")
 
 
 def test_remote_package_rejects_oversized_responses_before_json_parsing(tmp_path, monkeypatch):
@@ -156,80 +298,7 @@ def test_remote_package_rejects_oversized_responses_before_json_parsing(tmp_path
         manager._fetch_remote_package("demo", "1.0.0")
 
 
-def test_remote_package_rejects_untrusted_or_missing_signatures(tmp_path):
-    manager = MarketplaceManager(tmp_path / "registry", remote_url="https://marketplace.test")
-
-    with pytest.raises(RuntimeError, match="trusted marketplace signing fingerprint"):
-        manager._verify_remote_package(manifest(), {}, b"signature")
-
-    manager = MarketplaceManager(
-        tmp_path / "other-registry",
-        remote_url="https://marketplace.test",
-        trusted_fingerprints=["B" * 40],
-    )
-
-    manager.gpg = _SignatureVerifier("A" * 40)
-
-    with pytest.raises(RuntimeError, match="untrusted key"):
-        manager._verify_remote_package(manifest(), {}, b"signature")
-
-    with pytest.raises(ValueError, match="complete 40- or 64-character"):
-        MarketplaceManager(tmp_path / "short-fingerprint", trusted_fingerprints=["A" * 16])
-
-
-def test_gpg_verification_uses_the_resolved_package_path(tmp_path):
-    class FakeGpg:
-        def __init__(self):
-            self.data_path = None
-
-        def verify_file(self, signature, data_path):
-            self.data_path = data_path
-            return type("Result", (), {"valid": True, "__str__": lambda self: "valid"})()
-
-    package = tmp_path / "nested" / "demo.pkg"
-    package.parent.mkdir()
-    package.write_bytes(b"package")
-    signature = tmp_path / "nested" / "demo.pkg.asc"
-    signature.write_bytes(b"signature")
-    verifier = GPGManager.__new__(GPGManager)
-    verifier.gpg = FakeGpg()
-
-    valid, _ = verifier.verify(package, signature)
-
-    assert valid
-    assert verifier.gpg.data_path == str(package.resolve())
-
-
-def test_gpg_data_verification_materializes_only_the_detached_signature():
-    class FakeGpg:
-        def __init__(self):
-            self.signature = None
-            self.data = None
-
-        def verify_data(self, signature_path, data):
-            from pathlib import Path
-
-            self.signature = Path(signature_path).read_bytes()
-            self.data = data
-
-            return type(
-                "Result",
-                (),
-                {"valid": True, "fingerprint": "A" * 40, "__str__": lambda self: "valid"},
-            )()
-
-    verifier = GPGManager.__new__(GPGManager)
-    verifier.gpg = FakeGpg()
-
-    valid, _, fingerprint = verifier.verify_data(b"signed data", b"signature")
-
-    assert valid
-    assert fingerprint == "A" * 40
-    assert verifier.gpg.signature == b"signature"
-    assert verifier.gpg.data == b"signed data"
-
-
-def test_package_artifact_pack_publish_and_sign_share_the_remote_payload(tmp_path):
+def test_package_artifact_pack_and_publish_needs_no_signing_key(tmp_path):
     source = tmp_path / "source"
     source.mkdir()
     (source / "manifest.json").write_text(__import__("json").dumps(manifest()))
@@ -237,90 +306,72 @@ def test_package_artifact_pack_publish_and_sign_share_the_remote_payload(tmp_pat
     (source / "templates" / "index.txt").write_text("hello")
     manager = MarketplaceManager(tmp_path / "registry")
     artifact_path = manager.pack(source, tmp_path / "demo-package.json")
-    artifact_manifest, encoded_files = manager._read_package_artifact(artifact_path)
-
-    class FakeGpg:
-        def __init__(self):
-            self.data = None
-
-        def sign_data(self, data, output_path, keyid, passphrase):
-            self.data = data
-            return __import__("pathlib").Path(output_path)
-
-    manager.gpg = FakeGpg()
-    signature_path = manager.sign(artifact_path)
     message = manager.publish(artifact_path)
 
-    assert artifact_manifest == manifest()
-    assert encoded_files["templates/index.txt"] == "aGVsbG8="
-    assert manager.gpg.data == manager.remote_signature_payload(artifact_manifest, encoded_files)
-    assert signature_path.name == "demo-package.json.asc"
     assert message == "Published demo@1.0.0"
     assert (tmp_path / "registry" / "demo" / "1.0.0" / "templates" / "index.txt").read_text() == "hello"
 
 
-def test_remote_publish_uploads_artifact_signature_and_optional_public_key(tmp_path, monkeypatch):
+def test_remote_publish_uploads_authenticated_manifest_and_files(tmp_path, monkeypatch):
     artifact = tmp_path / "demo.json"
     artifact.write_text(__import__("json").dumps({"manifest": manifest(), "files": {"asset.txt": "aGVsbG8="}}))
-    signature = tmp_path / "demo.json.asc"
-    signature.write_bytes(b"signature")
-    public_key = tmp_path / "publisher.asc"
-    public_key.write_text("armored key")
     manager = MarketplaceManager(tmp_path / "registry", remote_url="https://marketplace.test")
     received = {}
 
-    def put(url, json, timeout):
-        received.update(url=url, json=json, timeout=timeout)
+    def put(url, json, headers, timeout, allow_redirects):
+        received.update(url=url, json=json, headers=headers, timeout=timeout, allow_redirects=allow_redirects)
 
         return _RemoteResponse()
 
     monkeypatch.setattr("templar.core.marketplace.MarketplaceManager.requests.put", put)
-    result = manager.publish(artifact, signature, public_key)
+    result = manager.publish(artifact, "temporary-token")
 
     assert result == "Published demo@1.0.0 to remote marketplace"
     assert received["url"] == "https://marketplace.test/packages/demo/1.0.0"
+    assert received["headers"] == {"Authorization": "Bearer temporary-token"}
     assert received["json"]["manifest"] == manifest()
     assert received["json"]["files"] == {"asset.txt": "aGVsbG8="}
-    assert received["json"]["signature"] == "c2lnbmF0dXJl"
-    assert received["json"]["public_key"] == "armored key"
+    assert set(received["json"]) == {"manifest", "files"}
+    assert received["allow_redirects"] is False
 
 
-def test_marketplace_key_import_returns_a_full_fingerprint(tmp_path):
-    class FakeGpg:
-        def import_key(self, key_file):
-            assert key_file == "marketplace.asc"
-            return "a" * 40
-
-    manager = MarketplaceManager(tmp_path / "registry")
-    manager.gpg = FakeGpg()
-
-    assert manager.import_key("marketplace.asc") == "A" * 40
+def test_remote_marketplace_rejects_plain_http_outside_loopback(tmp_path):
+    with pytest.raises(ValueError, match="require HTTPS"):
+        MarketplaceManager(tmp_path / "registry", remote_url="http://marketplace.example/api")
 
 
-def test_marketplace_key_import_can_persist_trust(tmp_path):
-    from types import SimpleNamespace
-    from templar.Marketplace import run_marketplace_command
+def test_remote_publish_requires_a_publisher_access_token(tmp_path):
+    manager = MarketplaceManager(tmp_path / "registry", remote_url="https://marketplace.test")
+    artifact = tmp_path / "demo.json"
+    artifact.write_text(__import__("json").dumps({"manifest": manifest(), "files": {"asset.txt": "aGVsbG8="}}))
 
-    class Config:
-        def __init__(self):
-            self.values = {"marketplace_registry_dir": str(tmp_path / "registry"), "marketplace_trusted_fingerprints": []}
+    with pytest.raises(ValueError, match="logged-in publisher"):
+        manager.publish(artifact)
 
-        def get(self, key, default=None):
-            return self.values.get(key, default)
 
-        def set(self, key, value):
-            self.values[key] = value
+def test_remote_publish_surfaces_retryable_scanner_errors(tmp_path, monkeypatch):
+    artifact = tmp_path / "demo.json"
+    artifact.write_text(__import__("json").dumps({"manifest": manifest(), "files": {"asset.txt": "aGVsbG8="}}))
+    manager = MarketplaceManager(tmp_path / "registry", remote_url="https://marketplace.test")
 
-    config = Config()
+    class ScannerUnavailableResponse:
+        status_code = 503
 
-    # Exercise config persistence without invoking a real GPG binary.
-    from unittest.mock import patch
+        def raise_for_status(self):
+            raise requests.HTTPError("503 Service Unavailable", response=self)
 
-    with patch("templar.Marketplace.MarketplaceManager.import_key", return_value="A" * 40):
-        fingerprint = run_marketplace_command("import-key", config=config, key_file="marketplace.asc", trust=True)
+        def json(self):
+            return {
+                "error": "Package scanning is temporarily unavailable. Please try publishing again later."
+            }
 
-    assert fingerprint == "A" * 40
-    assert config.values["marketplace_trusted_fingerprints"] == ["A" * 40]
+    monkeypatch.setattr(
+        "templar.core.marketplace.MarketplaceManager.requests.put",
+        lambda *args, **kwargs: ScannerUnavailableResponse(),
+    )
+
+    with pytest.raises(RuntimeError, match="Please try publishing again later"):
+        manager.publish(artifact, "test-access-token")
 
 
 def test_dependency_resolver_backtracks_to_a_compatible_version(tmp_path):
@@ -345,7 +396,7 @@ def test_semver_and_remote_version_validation_are_controlled(tmp_path, monkeypat
 
     monkeypatch.setattr(
         "templar.core.marketplace.MarketplaceManager.requests.get",
-        lambda url, timeout, stream=False: _RemoteResponse({"versions": ["1.bad"]}),
+        lambda url, timeout, stream=False, allow_redirects=True: _RemoteResponse({"versions": ["1.bad"]}),
     )
 
     with pytest.raises(RuntimeError, match="valid semantic versions"):

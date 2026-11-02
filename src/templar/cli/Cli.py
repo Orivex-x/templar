@@ -28,6 +28,7 @@ class TemplarCLI:
 
         self.parser.add_argument("-h", "--help", action="store_true", help="Show this help message")
         self.subparsers = self.parser.add_subparsers(dest="command")
+        self.marketplace_subparsers = None
 
         # Register commands dynamically
         self._register_commands()
@@ -40,6 +41,16 @@ class TemplarCLI:
 
         def add_help_arg(parser, command_name):
             parser.add_argument("-h", "--help", action="store_true", help=f"Show help for '{command_name}'")
+
+        marketplace_parser = self.subparsers.add_parser(
+            "marketplace",
+            help="Manage marketplace packages",
+            add_help=False,
+        )
+        marketplace_parser.add_argument(
+            "-h", "--help", action="store_true", help="Show help for 'marketplace'"
+        )
+        self.marketplace_subparsers = marketplace_parser.add_subparsers(dest="marketplace_action")
 
         def add_command(name, func, help_text, args=None):
             if name in registered_commands:
@@ -57,6 +68,23 @@ class TemplarCLI:
                 args(parser)
 
             parser.set_defaults(func=func)
+
+            if name.startswith("marketplace-"):
+                marketplace_name = name.removeprefix("marketplace-")
+                marketplace_command = self.marketplace_subparsers.add_parser(
+                    marketplace_name,
+                    help=help_text,
+                    add_help=False,
+                )
+                marketplace_command.error = lambda message, parser=marketplace_command: self._render_parse_error(
+                    parser, message
+                )
+                add_help_arg(marketplace_command, f"marketplace {marketplace_name}")
+
+                if args:
+                    args(marketplace_command)
+
+                marketplace_command.set_defaults(func=func)
 
         for cmd_file in self.COMMAND_FOLDER.glob("*.py"):
             if cmd_file.name.startswith("__"):
@@ -87,11 +115,17 @@ class TemplarCLI:
         raw_args = sys.argv[1:]
 
         if "-h" in raw_args or "--help" in raw_args:
-            command_name = next(
-                (argument for argument in raw_args if argument in self.subparsers.choices),
-                None,
-            )
-            parser = self.subparsers.choices.get(command_name, self.parser)
+            parser = self.parser
+
+            for argument in raw_args:
+                subparsers = next(
+                    (action for action in parser._actions if isinstance(action, argparse._SubParsersAction)),
+                    None,
+                )
+
+                if subparsers and argument in subparsers.choices:
+                    parser = subparsers.choices[argument]
+
             print_rich_help(parser, self.console)
 
             return
@@ -100,19 +134,20 @@ class TemplarCLI:
         
         try:
             if getattr(args, "help", False):
-                if getattr(args, "command", None):
-                    subparser = self.subparsers.choices.get(args.command)
+                parser = self.subparsers.choices.get(getattr(args, "command", None), self.parser)
 
-                    if subparser:
-                        print_rich_help(subparser, self.console)
-                    else:
-                        print_rich_help(self.parser, self.console)
-                else:
-                    print_rich_help(self.parser, self.console)
-                
+                if getattr(args, "marketplace_action", None):
+                    parser = self.marketplace_subparsers.choices.get(args.marketplace_action, parser)
+
+                print_rich_help(parser, self.console)
+
                 return
 
             if not hasattr(args, "func"):
+                if getattr(args, "command", None) == "marketplace":
+                    print_rich_help(self.subparsers.choices["marketplace"], self.console)
+                    return
+
                 self.output.error(f"Unknown command: {getattr(args, 'command', None)}")
                 print_rich_help(self.parser, self.console)
                 sys.exit(1)

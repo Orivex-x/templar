@@ -11,6 +11,7 @@ from templar.cli.commands.ConfigCmd import ConfigCommand
 from templar.cli.commands.New import NewCommand
 from templar.cli.commands.Run import RunCommand, auto_map_templates
 from templar.cli.commands.Migrate import MigrateCommand
+from templar.cli.commands.Marketplace import MarketplaceInstallCommand, MarketplacePublishCommand
 
 
 def config_set_args(*arguments):
@@ -27,9 +28,64 @@ def test_cli_discovers_the_supported_commands(monkeypatch, temp_project_dir):
 
     assert {
         "config", "create", "deploy", "help", "install-completion", "new",
-        "migrate", "preview", "routes", "run", "shell", "marketplace-install",
-        "marketplace-publish", "marketplace-sign", "marketplace-verify",
+        "migrate", "preview", "routes", "run", "shell", "marketplace-pack",
+        "marketplace-install", "marketplace-publish",
     }.issubset(cli.subparsers.choices)
+    assert {"pack", "publish", "install"} == set(cli.marketplace_subparsers.choices)
+
+
+@pytest.mark.unit
+def test_marketplace_commands_support_nested_and_legacy_syntax(monkeypatch, temp_project_dir):
+    monkeypatch.chdir(temp_project_dir)
+    cli = TemplarCLI()
+
+    nested = cli.parser.parse_args(["marketplace", "install", "widgets", "--version", "1.2.0"])
+    legacy = cli.parser.parse_args(["marketplace-install", "widgets", "--version", "1.2.0"])
+
+    assert nested.marketplace_action == "install"
+    assert nested.name == legacy.name == "widgets"
+    assert nested.version == legacy.version == "1.2.0"
+
+
+@pytest.mark.unit
+def test_marketplace_remote_commands_use_the_builtin_registry_url(monkeypatch):
+    from templar.cli.commands.Marketplace import MARKETPLACE_API_URL
+
+    calls = []
+    install = MarketplaceInstallCommand()
+    publish = MarketplacePublishCommand()
+    install._run = lambda action, **kwargs: calls.append((action, kwargs))
+    publish._run = lambda action, **kwargs: calls.append((action, kwargs))
+    monkeypatch.setattr("builtins.input", lambda prompt: "publisher")
+    monkeypatch.setattr("templar.cli.commands.Marketplace.getpass.getpass", lambda prompt: "secret")
+
+    class LoginResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"Status": True, "Data": {"access_token": "temporary-token"}}
+
+    monkeypatch.setattr(
+        "templar.cli.commands.Marketplace.requests.post",
+        lambda *args, **kwargs: LoginResponse(),
+    )
+
+    install.run(argparse.Namespace(name="widgets", version="1.2.0"))
+    publish.run(argparse.Namespace(pkg_file="package.json"))
+
+    assert calls[0] == (
+        "install",
+        {"name": "widgets", "version": "1.2.0", "remote_url": MARKETPLACE_API_URL},
+    )
+    assert calls[1] == (
+        "publish",
+        {
+            "pkg_file": "package.json",
+            "access_token": "temporary-token",
+            "remote_url": MARKETPLACE_API_URL,
+        },
+    )
 
 
 @pytest.mark.unit
@@ -145,6 +201,7 @@ def test_run_merges_app_routes_without_losing_discovered_template_routes(monkeyp
 @pytest.mark.unit
 def test_scaffolding_and_route_discovery_support_package_and_nested_templates(temp_project_dir):
     assert NewCommand()._resolve_skeleton_dir().is_dir()
+    assert (NewCommand()._resolve_skeleton_dir() / "utilities" / "__init__.py").is_file()
 
     nested = temp_project_dir / "templates" / "auth"
     nested.mkdir()

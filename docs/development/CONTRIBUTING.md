@@ -48,7 +48,7 @@ pytest tests/integration/test_http_server.py -v
 ### Static Sanity Checks
 ```bash
 # Bytecode compilation verification
-python -m compileall -q src
+python3 -m compileall -q src
 ```
 
 ---
@@ -68,10 +68,10 @@ To build and verify source distributions and wheels:
 
 ```bash
 # Install packaging tools
-python -m pip install --upgrade build twine
+python3 -m pip install --upgrade build twine
 
 # Build package artifacts
-python -m build
+python3 -m build
 
 # Validate metadata and artifacts
 twine check dist/*

@@ -46,7 +46,7 @@ class BaseCommand:
         Shared helper for marketplace-style commands.
 
         Args:
-            action: The marketplace action (install, publish, sign, verify)
+            action: The marketplace action (pack, publish, install)
             kwargs: Additional parameters
         """
         try:
@@ -61,7 +61,8 @@ class BaseCommand:
 
             for k, v in kwargs.items():
                 content.append(f"{k}: ", style="magenta")
-                content.append("[hidden]\n" if "passphrase" in k.lower() else f"{v}\n", style="green")
+                sensitive = any(term in k.lower() for term in ("password", "passphrase", "token", "secret"))
+                content.append("[hidden]\n" if sensitive else f"{v}\n", style="green")
 
             if result is not None:
                 content.append("Result: ", style="magenta")

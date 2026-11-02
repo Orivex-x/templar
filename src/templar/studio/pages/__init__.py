@@ -1,10 +1,10 @@
-from templar.studio.pages.overview import render_overview
-from templar.studio.pages.config import render_config
-from templar.studio.pages.routes import render_routes
-from templar.studio.pages.requests import render_requests
-from templar.studio.pages.templates import render_templates
-from templar.studio.pages.database import render_database
-from templar.studio.pages.project_doctor import render_project_doctor
+from templar.studio.pages.__templar_studio_overview import render_overview
+from templar.studio.pages.__templar_studio_config import render_config
+from templar.studio.pages.__templar_studio_routes import render_routes
+from templar.studio.pages.__templar_studio_requests import render_requests
+from templar.studio.pages.__templar_studio_templates import render_templates
+from templar.studio.pages.__templar_studio_database import render_database
+from templar.studio.pages.__templar_studio_project_doctor import render_project_doctor
 
 __all__ = [
     "render_overview",

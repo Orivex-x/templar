@@ -137,8 +137,60 @@ templar migrate user-schema
 ## 5. Interactive Shell
 
 ### `templar shell`
-Launches an interactive Python shell pre-loaded with `config`, `router`, `renderer`, `db`, and `User` models for rapid testing and debugging.
+Launches an interactive Python shell pre-loaded with `__templar_studio_config.py`, `router`, `renderer`, `db`, and `User` models for rapid testing and debugging.
 
 ```bash
 templar shell
 ```
+
+---
+
+## 6. Marketplace Packages
+
+Templar publishes and installs packages through its built-in marketplace
+API. The CLI has the marketplace API URL built in
+(`http://127.0.0.1:8080/api`), so no marketplace URL setting is required in
+`templar.config.yml`. Package sources are directories containing
+`manifest.json` and the files to install.
+The manifest must declare a `type`: `template`, `utility`, `theme`, or
+`component`. Package files are copied into the matching project directory:
+`templates/`, `utilities/`, `themes/`, or `components/`. Place files in the
+package relative to that destination (for example, put `dark.templar.py` at
+the package root for a theme package).
+
+```bash
+templar marketplace pack ./my-package ./dist/my-package.json
+templar marketplace publish ./dist/my-package.json
+```
+
+Package versions are immutable. Install a package and its dependencies with:
+
+```bash
+templar marketplace install my-package --version 1.0.0
+```
+
+Publishing requires a marketplace account. The CLI prompts for your username
+and password for each publish and does not save the password. The first
+publisher to claim a package name owns it; only that account can publish later
+versions. Hosted registries must use HTTPS. Set
+`TEMPLAR_MARKETPLACE_API_URL=https://marketplace.example/api` in the
+environment only when using a different hosted registry; do not put registry
+credentials or URLs in `templar.config.yml`.
+
+The marketplace scans each decoded file with ClamAV before storing a release.
+The CLI checks for a clean scan result before downloading and reports the scan
+engine, timestamp, and static-review findings. Releases without a clean result
+are not listed or installable. Malware detection and static checks are not a
+guarantee that package code is safe.
+
+### Marketplace command list
+
+| Command | Purpose |
+| :--- | :--- |
+| `templar marketplace pack SRC_DIR OUTPUT` | Build an artifact from a package directory. |
+| `templar marketplace publish PKG_FILE [--username USER]` | Sign in and publish an artifact to the built-in registry. |
+| `templar marketplace install NAME` | Install a package and its dependencies into directories selected by manifest type. |
+
+Use `templar marketplace <command> --help` for command options. The previous
+hyphenated spellings, such as `templar marketplace-install`, remain supported
+as aliases.

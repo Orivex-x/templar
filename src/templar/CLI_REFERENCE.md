@@ -11,17 +11,23 @@ exact parser help from the installed version.
 | `config [show\|activate\|set]` | Inspect, select, or update project configuration. | `templar config activate prod` |
 | `migrate ACTION` | Manage migrations: `status`, `run`, `rollback`, `create`, or `user-schema`. | `templar migrate run` |
 | `preview TEMPLATE` | Render a template in the terminal. | `templar preview index` |
-| `routes` | Show discovered and explicit routes. | `templar routes` |
+| `__templar_studio_routes.py` | Show discovered and explicit routes. | `templar routes` |
 | `shell` | Open a Python shell with project renderer, router, and config objects. | `templar shell` |
 | `deploy` | Stage and deploy through the Docker or SSH provider. | `templar deploy --provider docker --image my-site` |
 | `install-completion` | Install user-scoped completion for Bash, zsh, Fish, or PowerShell. | `templar install-completion --shell fish` |
-| `marketplace-pack` | Create a marketplace package artifact. | `templar marketplace-pack ./package ./dist/package.json` |
-| `marketplace-sign` | Make a detached GPG signature for an artifact. | `templar marketplace-sign ./dist/package.json --keyid FINGERPRINT` |
-| `marketplace-publish` | Publish an artifact and signature to the configured marketplace. | `templar marketplace-publish ./dist/package.json` |
-| `marketplace-install` | Install an approved marketplace package. | `templar marketplace-install widgets --version 1.2.0` |
-| `marketplace-import-key` | Import a signing public key; `--trust` adds its fingerprint to project config. | `templar marketplace-import-key vendor.asc --trust` |
-| `marketplace-verify` | Verify an artifact’s detached signature. | `templar marketplace-verify package.json package.json.asc` |
+| `marketplace ACTION` | Publish and install marketplace packages; see the commands below. | `templar marketplace install widgets --version 1.2.0` |
 | `help [COMMAND]` | Display Rich CLI help. | `templar help migrate` |
+
+### Marketplace commands
+
+| Command | Purpose | Example |
+| --- | --- | --- |
+| `marketplace pack SRC_DIR OUTPUT` | Build a package artifact from a directory containing `manifest.json`. | `templar marketplace pack ./package ./dist/package.json` |
+| `marketplace publish PKG_FILE [--username USER]` | Sign in and publish an artifact to the built-in package registry. | `templar marketplace publish ./dist/package.json` |
+| `marketplace install NAME` | Install a package and its dependencies from the built-in registry. | `templar marketplace install widgets --version 1.2.0` |
+
+The previous `marketplace-pack`, `marketplace-publish`, and
+`marketplace-install` spellings remain available as aliases.
 
 ## Configuration commands
 
@@ -53,17 +59,41 @@ templar migrate user-schema --model myapp.models:Account
 built-in `User` table. It must be run during deployment, not left to normal
 request handling.
 
-## Marketplace trust
+## Marketplace packages
 
-Remote marketplace installation requires a detached signature and a trusted,
-full OpenPGP fingerprint. Bootstrap a vendor key with:
+The CLI is preconfigured to use the Templar Marketplace API
+(`http://127.0.0.1:8080/api`) for remote publishing and installation. You do not
+need to add a marketplace URL to `templar.config.yml`. Package sources need a
+`manifest.json` with `name`, semantic `version`, `type`, `author`,
+`description`, and `license`; `type` must be `template`, `utility`, `theme`,
+or `component`. Put files relative to the destination directory: templates
+install in `templates/`, themes in `themes/`, components in `components/`, and
+utilities in `utilities/`. For example:
 
 ```sh
-templar marketplace-import-key ./vendor-public.asc --trust
-templar marketplace-install vendor-package
+templar marketplace pack ./my-package ./dist/my-package.json
+templar marketplace publish ./dist/my-package.json
 ```
 
-Do not use short key IDs as trust anchors. Package artifacts, signatures, and
-public-key metadata are validated before installation. Verified package files
-are materialised at `marketplace_assets_dir/<package>/<version>/` (by default,
-`static/assets/marketplace/`) and are available through `/static/assets/...`.
+Publishing prompts for your marketplace account credentials (or accepts
+`--username`). The password is not saved. Marketplace package names belong to
+the account that first publishes them, and releases are immutable. Use HTTPS
+for remote registries; only localhost development registries may use HTTP.
+Override the built-in registry for a hosted deployment with
+`TEMPLAR_MARKETPLACE_API_URL=https://marketplace.example/api`.
+
+Install a package and its dependencies with:
+
+```sh
+templar marketplace install my-package --version 1.0.0
+```
+
+Package artifacts and metadata are validated before installation. Downloads
+are public and use HTTPS to protect package integrity in transit. Before
+downloading, the CLI checks the registry's ClamAV scan status and timestamp;
+it refuses packages without a clean result. The install result shows
+the scanner version and any static-review findings. Installed files are copied
+into the project's directory selected by the package type; those
+directories can be customized with `templates_dir`, `themes_dir`,
+`components_dir`, and `utilities_dir`. Package publishing and installation use
+the marketplace CLI; browser ZIP uploads are not supported.

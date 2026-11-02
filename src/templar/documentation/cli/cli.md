@@ -7,7 +7,7 @@ templar <command> [options]
 templar <command> --help
 ```
 
-The console entry point is the supported interface. `python -m templar` is not
+The console entry point is the supported interface. `python3 -m templar` is not
 a supported invocation.
 
 ## First use
@@ -16,7 +16,7 @@ a supported invocation.
 templar create my-site
 cd my-site
 python3 -m venv .venv
-python -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 templar run
 ```
 
@@ -47,5 +47,5 @@ templar migrate run
 
 `templar config show` redacts sensitive resolved values unless
 `--show-secrets` is explicitly supplied. See the packaged
-[CLI reference](../../CLI_REFERENCE.md) for all commands, marketplace trust,
+[CLI reference](../../CLI_REFERENCE.md) for all commands, marketplace packages,
 and migration examples.

@@ -65,6 +65,7 @@ class CreateCommand(BaseCommand):
             project_dir / "models",
             project_dir / "themes",
             project_dir / "components",
+            project_dir / "utilities",
         ):
             directory.mkdir(parents=True, exist_ok=True)
 

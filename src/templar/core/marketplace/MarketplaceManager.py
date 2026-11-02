@@ -1,9 +1,9 @@
-import sys, json, requests, base64, logging, re, shutil, tempfile
+import sys, json, requests, base64, logging, shutil
 from pathlib import Path
-from typing import Dict, Iterable, Tuple, Optional
-from urllib.parse import quote
+from typing import Dict, Tuple, Optional
+from urllib.parse import quote, urlparse
 
-from templar.core.marketplace.Registry import Registry
+from templar.core.marketplace.Registry import PACKAGE_TYPES, Registry
 from templar.core.marketplace.DependencyResolver import DependencyResolver
 from templar.core.marketplace.SemVer import SemVer
 
@@ -14,26 +14,39 @@ DEFAULT_MAX_PACKAGE_BYTES = 10 * 1024 * 1024
 DEFAULT_MAX_FILE_BYTES = 2 * 1024 * 1024
 DEFAULT_MAX_FILE_COUNT = 1_000
 DEFAULT_MAX_MANIFEST_BYTES = 256 * 1024
-DEFAULT_MAX_SIGNATURE_BYTES = 1024 * 1024
+
 
 class MarketplaceManager:
-    """Unified manager for packaging, publishing, installing, and verifying assets."""
+    """Unified manager for packaging, publishing, and installing packages."""
 
     def __init__(
         self,
         registry_dir: str = "templar_packages",
         assets_dir: str = "static/assets/marketplace",
         remote_url: Optional[str] = None,
-        trusted_fingerprints: Optional[Iterable[str]] = None,
         max_package_bytes: int = DEFAULT_MAX_PACKAGE_BYTES,
         max_file_bytes: int = DEFAULT_MAX_FILE_BYTES,
         max_file_count: int = DEFAULT_MAX_FILE_COUNT,
+        install_dirs: Optional[Dict[str, str | Path]] = None,
     ) -> None:
         self.registry = Registry(registry_dir)
         self.assets_dir = Path(assets_dir).resolve()
-        self.gpg = None
+        self.install_dirs = {
+            package_type: Path(path).resolve()
+            for package_type, path in (install_dirs or {}).items()
+        }
+        self.install_dirs.setdefault("template", Path("templates").resolve())
+        self.install_dirs.setdefault("utility", Path("utilities").resolve())
+        self.install_dirs.setdefault("theme", Path("themes").resolve())
+        self.install_dirs.setdefault("component", Path("components").resolve())
         self.remote_url = remote_url  # optional remote API base
-        self.trusted_fingerprints = self._normalize_fingerprints(trusted_fingerprints or [])
+        if self.remote_url:
+            parsed_remote = urlparse(self.remote_url)
+            is_loopback = parsed_remote.scheme == "http" and parsed_remote.hostname in {
+                "localhost", "127.0.0.1", "::1",
+            }
+            if parsed_remote.scheme != "https" and not is_loopback:
+                raise ValueError("Marketplace package transfers require HTTPS outside localhost.")
 
         if any(isinstance(value, bool) or not isinstance(value, int) or value <= 0 for value in (max_package_bytes, max_file_bytes, max_file_count)):
             raise ValueError("Marketplace package limits must be positive integers")
@@ -44,25 +57,6 @@ class MarketplaceManager:
         self.max_package_bytes = max_package_bytes
         self.max_file_bytes = max_file_bytes
         self.max_file_count = max_file_count
-
-    @staticmethod
-    def _normalize_fingerprints(fingerprints: Iterable[str]) -> set[str]:
-        normalized = set()
-
-        for fingerprint in fingerprints:
-            if not isinstance(fingerprint, str) or not re.fullmatch(r"(?:[A-Fa-f0-9]{40}|[A-Fa-f0-9]{64})", fingerprint):
-                raise ValueError("Marketplace trusted fingerprints must be complete 40- or 64-character hexadecimal fingerprints")
-
-            normalized.add(fingerprint.upper())
-
-        return normalized
-
-    def _get_gpg(self):
-        if self.gpg is None:
-            from templar.core.marketplace.GPGManager import GPGManager
-            self.gpg = GPGManager()
-
-        return self.gpg
 
     # -------------------------
     # Packaging
@@ -103,11 +97,14 @@ class MarketplaceManager:
             raise ValueError("manifest.json is required in the package source directory")
 
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        required = ["name", "version", "author", "description", "license"]
+        required = ["name", "version", "type", "author", "description", "license"]
 
         for req in required:
             if req not in manifest:
                 raise ValueError(f"Manifest missing required field: {req}")
+
+        if not isinstance(manifest["type"], str) or manifest["type"] not in PACKAGE_TYPES:
+            raise ValueError(f"Manifest type must be one of: {', '.join(sorted(PACKAGE_TYPES))}")
 
         if not isinstance(manifest.get("name"), str) or not SemVer.is_valid(manifest.get("version")):
             raise ValueError("Package manifest must contain a string name and a valid semantic version")
@@ -139,14 +136,12 @@ class MarketplaceManager:
     def publish(
         self,
         pkg_file: str,
-        signature_file: Optional[str] = None,
-        public_key_file: Optional[str] = None,
+        access_token: Optional[str] = None,
     ) -> str:
-        """Publish locally or upload a signed package artefact to the remote registry.
+        """Publish a package artifact locally or to the remote registry.
 
         Remote registries receive ``PUT /packages/{name}/{version}`` with a JSON
-        body containing ``manifest``, ``files``, a base64 detached ``signature``,
-        and optional armoured ``public_key``. The signature covers :meth:`remote_signature_payload`.
+        body containing the package ``manifest`` and ``files``.
         """
         manifest, encoded_files = self._read_package_artifact(pkg_file)
         name, version = manifest["name"], manifest["version"]
@@ -155,40 +150,41 @@ class MarketplaceManager:
             raise ValueError("Package manifest version must be a valid semantic version")
 
         if self.remote_url:
-            signature_path = Path(signature_file) if signature_file else Path(pkg_file).with_suffix(Path(pkg_file).suffix + ".asc")
-
-            try:
-                signature = signature_path.read_bytes()
-            except OSError as exc:
-                raise ValueError(f"A detached package signature is required for remote publishing: {exc}") from exc
-
-            if not signature:
-                raise ValueError("A detached package signature is required for remote publishing")
-
-            public_key = None
-
-            if public_key_file:
-                try:
-                    public_key = Path(public_key_file).read_text(encoding="utf-8")
-                except OSError as exc:
-                    raise ValueError(f"Could not read public key file: {exc}") from exc
-
-            payload = {
-                "manifest": manifest,
-                "files": encoded_files,
-                "signature": base64.b64encode(signature).decode("ascii"),
-            }
-
-            if public_key:
-                payload["public_key"] = public_key
-
+            if not access_token:
+                raise ValueError("Marketplace publishing requires a logged-in publisher account.")
             endpoint = f"{self.remote_url}/packages/{quote(name, safe='')}/{quote(version, safe='')}"
 
             try:
-                response = requests.put(endpoint, json=payload, timeout=15)
+                response = requests.put(
+                    endpoint,
+                    json={"manifest": manifest, "files": encoded_files},
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    timeout=15,
+                    allow_redirects=False,
+                )
                 response.raise_for_status()
+                status_code = getattr(response, "status_code", None)
+                if isinstance(status_code, int) and not 200 <= status_code < 300:
+                    raise requests.HTTPError("Marketplace returned a non-success status", response=response)
+            except requests.HTTPError as exc:
+                details = ""
+                if exc.response is not None:
+                    try:
+                        body = exc.response.json()
+                        if isinstance(body, dict) and isinstance(body.get("error"), str):
+                            details = body["error"]
+                    except ValueError:
+                        pass
+                if details:
+                    raise RuntimeError(details) from exc
+                raise RuntimeError(
+                    f"Marketplace rejected {name}@{version} with HTTP "
+                    f"{getattr(exc.response, 'status_code', 'error')}."
+                ) from exc
             except requests.RequestException as exc:
-                raise RuntimeError(f"Failed to publish {name}@{version} to remote marketplace: {exc}") from exc
+                raise RuntimeError(
+                    f"Could not reach the marketplace to publish {name}@{version}. Please try again later."
+                ) from exc
 
             return f"Published {name}@{version} to remote marketplace"
 
@@ -204,15 +200,6 @@ class MarketplaceManager:
 
         return f"Published {name}@{version}"
 
-    def import_key(self, key_file: str) -> str:
-        """Import a marketplace signing key and return its full fingerprint."""
-        fingerprint = self._get_gpg().import_key(key_file)
-
-        if not fingerprint:
-            raise RuntimeError("No public key was imported")
-
-        return fingerprint.upper()
-
     # -------------------------
     # Installation
     # -------------------------
@@ -223,7 +210,7 @@ class MarketplaceManager:
         Returns:
             Dict[str, Dict[str, str]]: Mapping of package name -> {'version': str,
             'installed_path': str, 'asset_path': str}. ``installed_path`` is
-            the verified registry cache; ``asset_path`` is the project-local
+            the local registry cache; ``asset_path`` is the project-local
             directory applications should reference.
         """
         resolver = DependencyResolver(self.registry, ensure_available=self._ensure_available)
@@ -235,10 +222,11 @@ class MarketplaceManager:
         except RuntimeError as e:
             raise RuntimeError(f"Dependency resolution failed: {e}")
 
-        installed_packages: Dict[str, Dict[str, str]] = {}
+        installed_packages: Dict[str, Dict[str, object]] = {}
 
         for pkg_name, version in resolved_versions.items():
             pkg_manifest = self.registry.get_manifest(pkg_name, version)
+            scan_info = None
 
             # If not present locally, fetch from remote
             if not pkg_manifest:
@@ -246,68 +234,69 @@ class MarketplaceManager:
                     raise RuntimeError(f"Package {pkg_name}@{version} not found locally and no remote configured")
                 
                 self._log(f"Fetching {pkg_name}@{version} from remote...")
-                pkg_manifest, pkg_files = self._fetch_remote_package(pkg_name, version)
+                pkg_manifest, pkg_files, scan_info = self._fetch_remote_package(pkg_name, version)
                 self.registry.store_package(pkg_name, version, pkg_manifest, pkg_files)
+            elif self.remote_url:
+                scan_info = self._fetch_remote_scan(name=pkg_name, version=version)
 
             pkg_path = self.registry.base / pkg_name / version
-            asset_path = self._materialize_assets(pkg_name, version, pkg_path)
+            asset_path = self._materialize_assets(pkg_path, pkg_manifest)
             installed_packages[pkg_name] = {
                 "version": version,
                 "installed_path": str(pkg_path),
                 "asset_path": str(asset_path),
             }
+            if scan_info is not None:
+                installed_packages[pkg_name].update(scan_info)
 
         return installed_packages
 
-    def _materialize_assets(self, name: str, version: str, package_path: Path) -> Path:
-        """Atomically expose a verified package below the project's asset root.
+    def _materialize_assets(
+        self,
+        package_path: Path,
+        manifest: Dict,
+    ) -> Path:
+        """Install package files into the project directory for their declared type."""
+        package_type = manifest.get("type")
 
-        Registry storage remains a private verified cache.  Keeping materialised
-        files in ``marketplace_assets_dir/<name>/<version>`` gives templates and
-        themes a stable location under the normal static directory without
-        granting package file names any path traversal capability.
-        """
-        name = Registry._component(name, "name")
-        version = Registry._component(version, "version")
+        if not isinstance(package_type, str) or package_type not in PACKAGE_TYPES:
+            raise ValueError(f"Package manifest type must be one of: {', '.join(sorted(PACKAGE_TYPES))}")
+
         package_path = package_path.resolve()
 
         if self.registry.base not in package_path.parents:
             raise ValueError("Marketplace package path must stay inside the registry")
 
-        target = (self.assets_dir / name / version).resolve()
+        target = self.install_dirs[package_type].resolve()
+        pending_files = []
 
-        if self.assets_dir != target.parent.parent:
-            raise ValueError("Marketplace asset path must stay inside the asset directory")
+        for source in package_path.rglob("*"):
+            if source.name == "manifest.json" or not source.is_file():
+                continue
 
-        if target.exists():
-            return target
+            resolved_source = source.resolve()
 
-        target.parent.mkdir(parents=True, exist_ok=True)
-        temp_dir = Path(tempfile.mkdtemp(prefix=f".{version}.", dir=target.parent))
+            if source.is_symlink() or package_path not in resolved_source.parents:
+                raise ValueError(f"Marketplace package contains an unsafe file: {source.name}")
 
-        try:
-            for source in package_path.rglob("*"):
-                if source.name == "manifest.json" or not source.is_file():
-                    continue
+            relative = source.relative_to(package_path)
+            destination = (target / relative).resolve()
 
-                resolved_source = source.resolve()
+            if target not in destination.parents:
+                raise ValueError(f"Marketplace asset path escapes its install directory: {relative}")
 
-                if source.is_symlink() or package_path not in resolved_source.parents:
-                    raise ValueError(f"Marketplace package contains an unsafe file: {source.name}")
+            if destination.exists():
+                if not destination.is_file() or destination.read_bytes() != resolved_source.read_bytes():
+                    raise FileExistsError(
+                        f"Package file already exists with different contents: {destination}"
+                    )
+                continue
 
-                relative = source.relative_to(package_path)
-                destination = (temp_dir / relative).resolve()
+            pending_files.append((resolved_source, destination))
 
-                if temp_dir not in destination.parents:
-                    raise ValueError(f"Marketplace asset path escapes its package directory: {relative}")
-
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(resolved_source, destination)
-
-            temp_dir.replace(target)
-        except Exception:
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            raise
+        for source, destination in pending_files:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
 
         return target
 
@@ -320,46 +309,22 @@ class MarketplaceManager:
             if self.registry.get_manifest(name, version):
                 continue
 
-            manifest, files = self._fetch_remote_package(name, version)
+            manifest, files, _scan_info = self._fetch_remote_package(name, version)
             self.registry.store_package(name, version, manifest, files)
 
     # -------------------------
     # Remote fetching
     # -------------------------
     @staticmethod
-    def remote_signature_payload(manifest: Dict, encoded_files: Dict[str, str]) -> bytes:
-        """Return the canonical payload remote registries must sign.
-
-        The detached signature is served from the package's ``/signature``
-        endpoint and covers both the manifest and the base64-encoded file map.
-        """
-        return json.dumps(
-            {"files": encoded_files, "manifest": manifest},
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-        ).encode("utf-8")
-
-    def _verify_remote_package(self, manifest: Dict, encoded_files: Dict[str, str], signature: bytes) -> None:
-        if not self.trusted_fingerprints:
-            raise RuntimeError("Remote installation requires at least one trusted marketplace signing fingerprint")
-
-        valid, details, fingerprint = self._get_gpg().verify_data(
-            self.remote_signature_payload(manifest, encoded_files), signature
-        )
-
-        if not valid:
-            raise RuntimeError(f"Remote package signature is invalid: {details}")
-
-        if fingerprint.upper() not in self.trusted_fingerprints:
-            raise RuntimeError(f"Remote package was signed by an untrusted key: {fingerprint or 'unknown'}")
-
-    @staticmethod
     def _limited_response(url: str, max_bytes: int) -> bytes:
         """Download an HTTP response with a hard in-memory size limit."""
-        response = requests.get(url, timeout=10, stream=True)
+        response = requests.get(url, timeout=10, stream=True, allow_redirects=False)
 
         try:
+            status_code = getattr(response, "status_code", None)
+            if isinstance(status_code, int) and 300 <= status_code < 400:
+                raise RuntimeError("Remote marketplace redirects are not allowed")
+
             response.raise_for_status()
             raw_length = response.headers.get("Content-Length")
 
@@ -392,16 +357,20 @@ class MarketplaceManager:
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"Remote {label} response is not valid JSON") from exc
 
-    def _fetch_remote_package(self, name: str, version: str) -> Tuple[Dict, Dict[str, str]]:
+    def _fetch_remote_package(
+        self,
+        name: str,
+        version: str,
+    ) -> Tuple[Dict, Dict[str, str], Dict[str, object]]:
         """
         Fetch manifest and package files from a remote registry.
 
         Returns:
-            Tuple[manifest, files]: manifest is dict, files is Dict[filename, content]
+            A validated manifest, decoded files, and the registry's clean scan report.
         """
+        scan_info = self._fetch_remote_scan(name, version)
         manifest_url = f"{self.remote_url}/packages/{quote(name, safe='')}/{quote(version, safe='')}/manifest"
         files_url = f"{self.remote_url}/packages/{quote(name, safe='')}/{quote(version, safe='')}/files"
-        signature_url = f"{self.remote_url}/packages/{quote(name, safe='')}/{quote(version, safe='')}/signature"
 
         try:
             # Fetch manifest
@@ -416,6 +385,11 @@ class MarketplaceManager:
                 or not SemVer.is_valid(version)
             ):
                 raise RuntimeError("Remote manifest name/version does not match the requested package")
+
+            if not isinstance(manifest.get("type"), str) or manifest["type"] not in PACKAGE_TYPES:
+                raise RuntimeError(
+                    f"Remote package type must be one of: {', '.join(sorted(PACKAGE_TYPES))}"
+                )
 
             # Fetch files
             # Base64 adds at most roughly one third overhead. The response allowance also leaves room for JSON names
@@ -434,12 +408,6 @@ class MarketplaceManager:
             if len(files_data) > self.max_file_count:
                 raise RuntimeError(f"Remote package exceeds the {self.max_file_count}-file limit")
 
-            signature = self._limited_response(signature_url, DEFAULT_MAX_SIGNATURE_BYTES)
-
-            if not signature:
-                raise RuntimeError("Remote package signature is empty")
-
-            self._verify_remote_package(manifest, files_data, signature)
             files, decoded_total = {}, 0
 
             for fname, content in files_data.items():
@@ -455,9 +423,32 @@ class MarketplaceManager:
 
                 files[fname] = decoded.decode("utf-8")
 
-            return manifest, files
+            return manifest, files, scan_info
         except (requests.RequestException, ValueError, UnicodeDecodeError) as e:
             raise RuntimeError(f"Failed to fetch remote package {name}@{version}: {e}")
+
+    def _fetch_remote_scan(self, name: str, version: str) -> Dict[str, object]:
+        scan_url = f"{self.remote_url}/packages/{quote(name, safe='')}/{quote(version, safe='')}/scan"
+        try:
+            scan_info = self._decode_json_response(
+                self._limited_response(scan_url, DEFAULT_MAX_MANIFEST_BYTES),
+                "package scan status",
+            )
+        except (requests.RequestException, ValueError, UnicodeDecodeError) as exc:
+            raise RuntimeError(f"Failed to verify the security scan for {name}@{version}: {exc}") from exc
+
+        if (
+            not isinstance(scan_info, dict)
+            or scan_info.get("scan_status") != "clean"
+            or isinstance(scan_info.get("scan_completed_at"), bool)
+            or not isinstance(scan_info.get("scan_completed_at"), int)
+            or scan_info["scan_completed_at"] <= 0
+            or not isinstance(scan_info.get("scan_engine"), str)
+            or not isinstance(scan_info.get("scan_findings"), list)
+        ):
+            raise RuntimeError(f"Package {name}@{version} does not have a valid clean security scan.")
+
+        return scan_info
 
     def _fetch_remote_versions(self, name: str) -> list[str]:
         try:
@@ -476,34 +467,6 @@ class MarketplaceManager:
             return versions
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to fetch versions for {name}: {e}")
-
-    # -------------------------
-    # Signing / Verification
-    # -------------------------
-    def sign(self, pkg_file: str, keyid: str = None, passphrase: str = None) -> Path:
-        manifest, encoded_files = self._read_package_artifact(pkg_file)
-        signature_path = Path(pkg_file).with_suffix(Path(pkg_file).suffix + ".asc")
-
-        return self._get_gpg().sign_data(
-            self.remote_signature_payload(manifest, encoded_files),
-            str(signature_path),
-            keyid,
-            passphrase,
-        )
-
-    def verify(self, pkg_file: str, sig_file: str) -> Tuple[bool, str]:
-        manifest, encoded_files = self._read_package_artifact(pkg_file)
-
-        try:
-            signature = Path(sig_file).read_bytes()
-        except OSError as exc:
-            raise ValueError(f"Could not read package signature: {exc}") from exc
-
-        valid, details, _ = self._get_gpg().verify_data(
-            self.remote_signature_payload(manifest, encoded_files), signature
-        )
-
-        return valid, details
 
     # -------------------------
     # Logging helper

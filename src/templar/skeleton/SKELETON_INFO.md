@@ -28,6 +28,8 @@ skeleton/
 ├── themes/                 # Theme definitions
 │   ├── light.templar.py    # Light theme
 │   └── dark.templar.py     # Dark theme
+├── components/             # Reusable application and UI components
+├── utilities/              # Reusable project helper modules
 ├── migrations/             # Database migrations
 │   └── example_migration.py
 └── static/                 # Static assets (CSS, JS, images)

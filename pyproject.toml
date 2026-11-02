@@ -28,7 +28,6 @@ dependencies = [
     "lxml",
     "PyYAML",
     "requests",
-    "python-gnupg",
 ]
 
 [project.optional-dependencies]

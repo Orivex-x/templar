@@ -39,11 +39,12 @@ dev:
   migrations_dir: migrations
   use_async_db: false
   marketplace_registry_dir: templar_packages
-  # Verified marketplace downloads are installed here as <package>/<version>/.
-  marketplace_assets_dir: static/assets/marketplace
-  marketplace_url: ''
-  # Remote packages require a detached signature from one of these GPG fingerprints.
-  marketplace_trusted_fingerprints: []
+  components_dir: components
+  utilities_dir: utilities
+  # Installed marketplace files are selected by each package's manifest type.
+  templates_dir: templates
+  themes_dir: themes
+  static_dir: static
   templates_dir: templates
   themes_dir: themes
   static_dir: static
@@ -90,11 +91,11 @@ prod:
   migrations_dir: migrations
   use_async_db: false
   marketplace_registry_dir: templar_packages
-  # Verified marketplace downloads are installed here as <package>/<version>/.
-  marketplace_assets_dir: static/assets/marketplace
-  marketplace_url: ''
-  # Remote packages require a detached signature from one of these GPG fingerprints.
-  marketplace_trusted_fingerprints: []
+  components_dir: components
+  utilities_dir: utilities
+  templates_dir: templates
+  themes_dir: themes
+  static_dir: static
   templates_dir: templates
   themes_dir: themes
   static_dir: static
